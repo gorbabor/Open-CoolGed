@@ -1,4 +1,4 @@
-# Kaeged GED — Plateforme Web GED SaaS Multi-Tenant
+# Open-CoolGed — GED SaaS Multi-Tenant (ex-Kaeged GED)
 
 Implémentation du cahier des charges `Cahier_des_Charges_GED_SaaS_Multi_Tenant_V1.0`
 (plateforme de Gestion Électronique de Documents, SaaS multi-tenant, ~1 000 utilisateurs,
