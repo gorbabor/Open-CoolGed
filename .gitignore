@@ -28,6 +28,7 @@ Thumbs.db
 
 # Artefacts de session / debug (ne jamais committer)
 cookies*.txt
+c.txt
 Credentials*.txt
 *.eml
 tmp_*.php
