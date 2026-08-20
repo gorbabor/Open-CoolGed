@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Processus d'ajout de documents — Kaeged GED V02</title>
+<style>
+  :root {
+    --brand: #0d6efd;
+    --dark: #1e293b;
+    --bg: #f4f6f9;
+    --ok: #198754;
+    --warn: #b8860b;
+    --danger: #dc3545;
+    --code-bg: #f1f5f9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    background: var(--bg);
+    color: #1f2937;
+    line-height: 1.55;
+  }
+  header.hero {
+    background: linear-gradient(135deg, var(--dark), #334155);
+    color: #fff;
+    padding: 2.5rem 2rem 2rem;
+  }
+  header.hero h1 { margin: 0 0 .4rem; font-size: 1.6rem; }
+  header.hero p { margin: .2rem 0; color: #cbd5e1; font-size: .95rem; }
+  header.hero .badge {
+    display: inline-block; background: var(--brand); color: #fff;
+    padding: .2rem .7rem; border-radius: 999px; font-size: .8rem; margin-top: .6rem;
+  }
+  nav.toc {
+    background: #fff; border-bottom: 1px solid #e5e7eb;
+    padding: .8rem 2rem; font-size: .9rem;
+  }
+  nav.toc a { color: var(--brand); text-decoration: none; margin-right: 1rem; white-space: nowrap; }
+  nav.toc a:hover { text-decoration: underline; }
+  main { max-width: 1050px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+  h2 {
+    border-bottom: 3px solid var(--brand); padding-bottom: .4rem;
+    margin-top: 2.5rem; font-size: 1.3rem;
+  }
+  h3 { margin-top: 1.8rem; font-size: 1.1rem; color: var(--dark); }
+  h4 { margin-top: 1.3rem; font-size: 1rem; }
+  .card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: 1rem 1.2rem; margin: .8rem 0;
+  }
+  .step {
+    background: #fff; border: 1px solid #e5e7eb; border-left: 5px solid var(--brand);
+    border-radius: 8px; padding: 1rem 1.2rem; margin: 1rem 0;
+  }
+  .step .num {
+    display: inline-block; background: var(--brand); color: #fff;
+    width: 26px; height: 26px; border-radius: 50%; text-align: center;
+    line-height: 26px; font-weight: 700; font-size: .85rem; margin-right: .5rem;
+  }
+  .step .title { font-weight: 700; font-size: 1rem; }
+  .step .where { color: var(--brand); font-size: .85rem; }
+  code, .code {
+    background: var(--code-bg); border: 1px solid #e2e8f0; border-radius: 4px;
+    padding: .1rem .35rem; font-family: 'Cascadia Code', Consolas, monospace; font-size: .85em;
+  }
+  pre.code { display: block; padding: .8rem 1rem; overflow-x: auto; line-height: 1.45; }
+  table { border-collapse: collapse; width: 100%; margin: .8rem 0; font-size: .9rem; }
+  th, td { border: 1px solid #e5e7eb; padding: .5rem .7rem; text-align: left; vertical-align: top; }
+  th { background: #f8fafc; }
+  .ok { color: var(--ok); font-weight: 600; }
+  .warn { color: var(--warn); font-weight: 600; }
+  .danger { color: var(--danger); font-weight: 600; }
+  .note {
+    background: #fffbeb; border-left: 4px solid var(--warn);
+    padding: .6rem 1rem; border-radius: 4px; font-size: .9rem; margin: .8rem 0;
+  }
+  .tip {
+    background: #f0fdf4; border-left: 4px solid var(--ok);
+    padding: .6rem 1rem; border-radius: 4px; font-size: .9rem; margin: .8rem 0;
+  }
+  .dangerbox {
+    background: #fef2f2; border-left: 4px solid var(--danger);
+    padding: .6rem 1rem; border-radius: 4px; font-size: .9rem; margin: .8rem 0;
+  }
+  .tree {
+    font-family: 'Cascadia Code', Consolas, monospace;
+    background: var(--dark); color: #e2e8f0;
+    border-radius: 8px; padding: 1rem 1.4rem; font-size: .92rem;
+    overflow-x: auto; white-space: pre; line-height: 1.7;
+  }
+  .tree .hl { color: #7dd3fc; font-weight: 700; }
+  .tree .tr { color: #fbbf24; }
+  .tree .dim { color: #94a3b8; }
+  .checklist li { margin: .3rem 0; }
+  footer { text-align: center; color: #94a3b8; font-size: .8rem; padding: 1.5rem; }
+  @media print {
+    nav.toc { display: none; }
+    body { background: #fff; }
+    .step, .card { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <h1>Processus d'ajout de documents — Système Documentaire V02</h1>
+  <p>De la création de la structure (Section → Lot) à l'ajout d'un document, puis à sa
+     qualification transversale (Famille, Domaine, Processus, Entité, Pays, Site, Poste/Département).</p>
+  <p>Application : Kaeged GED — <code>https://kaeged.kaenergie.com</code></p>
+  <span class="badge">Processus d'ajout de documents — V02 · v1.0</span>
+</header>
+
+<nav class="toc">
+  <a href="#principes">1. Principes</a>
+  <a href="#hierarchie">2. Hiérarchie Section → Lot → Document</a>
+  <a href="#qualification">3. Qualification transversale</a>
+  <a href="#etape1">4. Étape 1 — Préparer la structure</a>
+  <a href="#etape2">5. Étape 2 — Ajouter le document</a>
+  <a href="#etape3">6. Étape 3 — Qualifier le document</a>
+  <a href="#etape4">7. Étape 4 — Cycle de vie</a>
+  <a href="#import">8. Raccourci — import du registre CSV</a>
+  <a href="#recap">9. Récapitulatif</a>
+</nav>
+
+<main>
+
+<!-- ============ 1. PRINCIPES ============ -->
+<h2 id="principes">1. Principes</h2>
+<div class="card">
+  <p>Le Système Documentaire V02 repose sur une <strong>hiérarchie de classement</strong> en 4 niveaux :</p>
+  <div class="tree"><span class="hl">Système Documentaire V02</span>
+├── <span class="tr">Section</span> 00 — Gouvernance documentaire <span class="dim">(IDs 001–020)</span>
+│   └── <span class="tr">Lot</span> « Contrats 2026 »
+│       └── <span class="hl">Document</span> « Contrat maintenance informatique 2026 »
+├── <span class="tr">Section</span> 01 — Gouvernance Groupe et juridique <span class="dim">(IDs 021–040)</span>
+├── <span class="tr">Section</span> 02 — Stratégie Groupe, pilotage et performance <span class="dim">(IDs 041–060)</span>
+└── <span class="tr">Section</span> 03 — Organisation Groupe <span class="dim">(IDs 061–080)</span></div>
+  <p>Chaque document est ensuite <strong>qualifié transversalement</strong> (en plus de son classement) par :</p>
+  <div class="tree"><span class="tr">Famille</span> + <span class="tr">Domaine</span> + <span class="tr">Processus</span> + <span class="tr">Entité</span> + <span class="tr">Pays</span> + <span class="tr">Site</span> + <span class="tr">Poste/Département</span></div>
+  <p>Ces qualifications servent au <strong>filtrage « Documents applicables à mon poste »</strong>
+     (menu « Mes documents ») et aux périmètres d'application.</p>
+</div>
+
+<!-- ============ 2. HIÉRARCHIE ============ -->
+<h2 id="hierarchie">2. Hiérarchie Section → Lot → Document (implémentation Kaeged)</h2>
+<div class="card">
+  <table>
+    <tr><th>Niveau V02</th><th>Objet Kaeged</th><th>Où le gérer</th><th>Exemple</th></tr>
+    <tr><td><strong>Système Documentaire V02</strong></td><td>Tenant (l'entreprise)</td><td>— (racine)</td><td>Entreprise Démo SA</td></tr>
+    <tr><td><strong>Section</strong></td><td><strong>Espace</strong> (<code>spaces</code>)</td><td>Menu « Espaces » → créer / renommer / supprimer</td><td>Section 00 — Gouvernance documentaire</td></tr>
+    <tr><td><strong>Lot</strong></td><td><strong>Dossier</strong> (<code>folders</code>)</td><td>Dans un espace (menu « Espaces »)</td><td>Lot 00 — Contrats 2026</td></tr>
+    <tr><td><strong>Document</strong></td><td><strong>Document</strong> (<code>documents</code>)</td><td>Menu « Documents » → « Importer »</td><td>Contrat maintenance informatique 2026</td></tr>
+  </table>
+  <div class="tip"><strong>Règle de continuité des ID</strong> : chaque section couvre une plage d'IDs
+  (Section 00 : 001–020, Section 01 : 021–040…). L'ID officiel est conservé dans
+  <code>document_code</code> / <code>reference</code> — il n'est jamais régénéré par le système.</div>
+</div>
+
+<!-- ============ 3. QUALIFICATION ============ -->
+<h2 id="qualification">3. Qualification transversale</h2>
+<div class="card">
+  <p>En plus de sa position dans l'arborescence, chaque document est décrit par des
+     <strong>qualificatifs transversaux</strong> (indépendants du classement) :</p>
+  <table>
+    <tr><th>Qualificatif</th><th>Objet Kaeged</th><th>Valeurs / exemples</th><th>État actuel dans l'appli</th></tr>
+    <tr><td><strong>Famille</strong></td><td>Type documentaire (<code>document_types</code>)</td><td>POL, MAN, PRC, INS, FOR, MOD, MAT, RAP, REF, REG, TDB, CHK, AUT…</td><td class="ok">Sélection au formulaire de création + CRUD (Admin → Types)</td></tr>
+    <tr><td><strong>Domaine</strong></td><td>Référentiel <code>domain</code></td><td>Gouvernance, Finances, Juridique, RH…</td><td class="warn">Référentiel géré (Admin → Référentiels) ; affectation au document via import CSV ou base</td></tr>
+    <tr><td><strong>Processus</strong></td><td>Référentiel <code>process</code></td><td>Gestion des contrats, Paie, Achats…</td><td class="warn">Idem</td></tr>
+    <tr><td><strong>Entité</strong></td><td>Référentiel <code>entity</code></td><td>Filiale A, Filiale B…</td><td class="warn">Idem</td></tr>
+    <tr><td><strong>Pays</strong></td><td>Référentiel <code>country</code></td><td>France, Côte d'Ivoire…</td><td class="warn">Idem</td></tr>
+    <tr><td><strong>Site</strong></td><td>Référentiel <code>site</code></td><td>Siège Abidjan, Usine Yamoussoukro…</td><td class="warn">Idem</td></tr>
+    <tr><td><strong>Poste / Département</strong></td><td>Référentiels <code>job</code> / <code>department</code> (+ direction)</td><td>Responsable Qualité / Direction Financière…</td><td class="warn">Idem (également portés par l'utilisateur)</td></tr>
+  </table>
+  <div class="note"><strong>État actuel (limite à connaître)</strong> : le formulaire de création
+  « Importer un document » permet aujourd'hui la <strong>Famille</strong> (type documentaire).
+  Les autres qualificatifs (Domaine, Processus, Entité, Pays, Site, Poste/Département) sont
+  <strong>gérés en base et via l'import du registre CSV</strong> (<code>v02:import</code>) ; leur
+  saisie dans le formulaire de création est une évolution prévue.</div>
+</div>
+
+<!-- ============ 4. ÉTAPE 1 ============ -->
+<h2 id="etape1">4. Étape 1 — Préparer la structure (une fois, puis à la demande)</h2>
+
+<div class="step">
+  <span class="num">1</span><span class="title">Créer la Section (Espace)</span>
+  <div class="where">Menu « Espaces » → bouton « Espace »</div>
+  <ul class="checklist">
+    <li>Nom = intitulé de la section (ex. « Section 00 — Gouvernance documentaire »)</li>
+    <li>Description et couleur (optionnelles)</li>
+    <li>Renommage possible ensuite (champ inline + crayon) ; suppression seulement si vide</li>
+  </ul>
+</div>
+
+<div class="step">
+  <span class="num">2</span><span class="title">Créer le Lot (Dossier) dans la section</span>
+  <div class="where">Menu « Espaces » → dans la carte de la section → « Nouveau dossier »</div>
+  <ul class="checklist">
+    <li>Un lot appartient à une section (ex. « Lot 00 — Contrats 2026 »)</li>
+    <li>Plusieurs dossiers par section possibles ; renommage et suppression (si vide) disponibles</li>
+  </ul>
+</div>
+
+<div class="step">
+  <span class="num">3</span><span class="title">Vérifier les référentiels transversaux</span>
+  <div class="where">Administration → Référentiels (permission admin requise)</div>
+  <ul class="checklist">
+    <li>Onglets : domaines, processus, postes, départements, directions, sites, entités, pays</li>
+    <li>Créer les valeurs manquantes (ex. domaine « Finances ») ; renommage et suppression (si non utilisé) disponibles</li>
+    <li>Vérifier les familles : Administration → Types &amp; métadonnées (ex. POL, MAN, PRC…)</li>
+  </ul>
+</div>
+
+<!-- ============ 5. ÉTAPE 2 ============ -->
+<h2 id="etape2">5. Étape 2 — Ajouter le document</h2>
+
+<div class="step">
+  <span class="num">1</span><span class="title">Ouvrir le formulaire</span>
+  <div class="where">Menu « Documents » → bouton « Importer »</div>
+</div>
+
+<div class="step">
+  <span class="num">2</span><span class="title">Renseigner le classement</span>
+  <div class="where">Formulaire « Importer un document »</div>
+  <table>
+    <tr><th>Champ</th><th>Rôle</th><th>Obligatoire</th></tr>
+    <tr><td>Titre</td><td>Nom du document</td><td class="danger">Oui</td></tr>
+    <tr><td>Référence</td><td>Référence interne (ex. CTR-2026-001)</td><td>Non</td></tr>
+    <tr><td>Espace</td><td><strong>Section</strong> du Système Documentaire</td><td class="danger">Oui</td></tr>
+    <tr><td>Dossier</td><td><strong>Lot</strong> (filtré selon la section choisie)</td><td>Non</td></tr>
+    <tr><td>Type documentaire</td><td><strong>Famille</strong> (POL, MAN, PRC…)</td><td>Non</td></tr>
+    <tr><td>Confidentialité</td><td>public / internal / confidential / secret</td><td>Non (défaut : internal)</td></tr>
+    <tr><td>Description</td><td>Contexte du document</td><td>Non</td></tr>
+    <tr><td>Date d'expiration</td><td>Échéance (si applicable)</td><td>Non</td></tr>
+    <tr><td>Fichier</td><td>PDF, Office, TXT, CSV, images (selon politique du tenant)</td><td class="danger">Oui</td></tr>
+    <tr><td>Métadonnées</td><td>Champs définis par la famille (si configurés)</td><td>Selon définition</td></tr>
+    <tr><td>Tags</td><td>Mots-clés libres</td><td>Non</td></tr>
+  </table>
+</div>
+
+<div class="step">
+  <span class="num">3</span><span class="title">Valider</span>
+  <div class="where">Bouton « Importer et créer »</div>
+  <ul class="checklist">
+    <li>Le fichier est stocké hors webroot (jamais d'URL publique — RM-012)</li>
+    <li>Une première version (v1.0) est créée avec empreinte (checksum)</li>
+    <li>Vous arrivez sur la fiche document : aperçu, versions, métadonnées, workflow, partage…</li>
+  </ul>
+</div>
+
+<!-- ============ 6. ÉTAPE 3 ============ -->
+<h2 id="etape3">6. Étape 3 — Qualifier le document (transversal)</h2>
+
+<div class="step">
+  <span class="num">1</span><span class="title">Famille</span>
+  <div class="where">Déjà saisie à la création (type documentaire) — modifiable via Admin → Types</div>
+</div>
+
+<div class="step">
+  <span class="num">2</span><span class="title">Domaine, Processus, Entité, Pays, Site, Poste/Département</span>
+  <div class="where">État actuel</div>
+  <ul class="checklist">
+    <li><strong>Valeurs gérées</strong> : Administration → Référentiels (création, renommage, suppression si non utilisé)</li>
+    <li><strong>Affectation au document</strong> :
+      <ul>
+        <li>par <strong>import du registre CSV</strong> (<code>php artisan v02:import</code>) — crée sections, lots, familles et domaines automatiquement ; ou</li>
+        <li>directement en base (<code>documents.domain_id</code>, <code>process_id</code>, pivot <code>document_referential</code> pour les dimensions multi-valeurs)</li>
+      </ul>
+    </li>
+    <li>Les dimensions de l'<strong>utilisateur</strong> (poste, département, direction, site, entité, pays) sont portées par son profil — elles servent au filtre « Mes documents »</li>
+  </ul>
+  <div class="dangerbox"><strong>Évolution recommandée</strong> : ajouter ces champs au formulaire
+  de création/édition du document (sélecteurs de référentiels) pour une saisie 100 % UI.</div>
+</div>
+
+<!-- ============ 7. ÉTAPE 4 ============ -->
+<h2 id="etape4">7. Étape 4 — Cycle de vie du document</h2>
+<div class="card">
+  <table>
+    <tr><th>Phase</th><th>Comment</th></tr>
+    <tr><td><strong>Validation / approbation</strong></td><td>Onglet « Workflow » de la fiche document → démarrer un workflow (étapes : vérification puis approbation) ; rejet → retour brouillon avec motif obligatoire ; approbation finale → statut « Approuvé — applicable »</td></tr>
+    <tr><td><strong>Diffusion</strong></td><td>Onglet « Partage » : partage interne (utilisateur/groupe, droit view/download/edit, expiration) ou lien externe (si activé, expiration obligatoire)</td></tr>
+    <tr><td><strong>Application</strong></td><td>Menu « Mes documents » : documents approuvés-applicables filtrés par les dimensions de l'utilisateur ; accusés de lecture si requis</td></tr>
+    <tr><td><strong>Révision</strong></td><td>Nouvelle version (onglet Versions) ; relance d'un workflow ; obsolescence automatique de l'ancienne version applicable</td></tr>
+    <tr><td><strong>Archivage / rétention</strong></td><td>Archivage manuel, rétention configurable par type (commande planifiée), corbeille puis suppression définitive réservée et auditée</td></tr>
+  </table>
+</div>
+
+<!-- ============ 8. IMPORT ============ -->
+<h2 id="import">8. Raccourci — import du registre maître (CSV)</h2>
+<div class="card">
+  <p>Pour initialiser le Système Documentaire V02 en masse (sections, lots, familles, domaines, statuts) :</p>
+  <pre class="code">php artisan v02:import registre.csv [--tenant=1] [--dry-run]</pre>
+  <p>Colonnes : <code>id;code;titre;section;lot;famille;version;statut;proprietaire;date_application;prochaine_revue;domaine;criticite</code></p>
+  <ul class="checklist">
+    <li>Crée automatiquement : espaces (sections), dossiers (lots), types (familles), référentiels (domaines)</li>
+    <li>Contrôles : id/code obligatoires et uniques, statut parmi les 7 valeurs V02</li>
+    <li>Rapport ligne par ligne (ok / erreurs)</li>
+  </ul>
+</div>
+
+<!-- ============ 9. RÉCAP ============ -->
+<h2 id="recap">9. Récapitulatif — chemin complet</h2>
+<div class="card">
+  <div class="tree"><span class="hl">Système Documentaire V02</span>
+├── <span class="tr">Section</span> (Espace)          <span class="dim">← Menu « Espaces »</span>
+│   └── <span class="tr">Lot</span> (Dossier)            <span class="dim">← Menu « Espaces » (dans la section)</span>
+│       └── <span class="hl">Document</span> (Fichier + métadonnées) <span class="dim">← Menu « Documents » → « Importer »</span>
+│           ├── <span class="tr">Famille</span>          <span class="dim">← Type documentaire (formulaire de création)</span>
+│           ├── <span class="tr">Domaine</span>         <span class="dim">← Référentiel domain (Admin → Référentiels / import CSV)</span>
+│           ├── <span class="tr">Processus</span>       <span class="dim">← Référentiel process</span>
+│           ├── <span class="tr">Entité</span>          <span class="dim">← Référentiel entity</span>
+│           ├── <span class="tr">Pays</span>            <span class="dim">← Référentiel country</span>
+│           ├── <span class="tr">Site</span>            <span class="dim">← Référentiel site</span>
+│           └── <span class="tr">Poste / Département</span> <span class="dim">← Référentiels job / department</span></div>
+  <p>→ Puis <strong>workflow</strong> (validation → approbation) → « Approuvé — applicable »
+     → visible dans « Mes documents » selon les dimensions de l'utilisateur.</p>
+</div>
+
+</main>
+
+<footer>
+  Processus d'ajout de documents — Kaeged GED V02 · v1.0 · Application : kaeged.kaenergie.com
+</footer>
+
+</body>
+</html>

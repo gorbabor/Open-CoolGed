@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentation administrateur — Kaeged GED</title>
+<style>
+  :root {
+    --brand: #0d6efd;
+    --dark: #1e293b;
+    --bg: #f4f6f9;
+    --ok: #198754;
+    --warn: #b8860b;
+    --danger: #dc3545;
+    --code-bg: #f1f5f9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    background: var(--bg);
+    color: #1f2937;
+    line-height: 1.55;
+  }
+  header.hero {
+    background: linear-gradient(135deg, var(--dark), #334155);
+    color: #fff;
+    padding: 2.5rem 2rem 2rem;
+  }
+  header.hero h1 { margin: 0 0 .4rem; font-size: 1.6rem; }
+  header.hero p { margin: .2rem 0; color: #cbd5e1; font-size: .95rem; }
+  header.hero .badge {
+    display: inline-block; background: var(--brand); color: #fff;
+    padding: .2rem .7rem; border-radius: 999px; font-size: .8rem; margin-top: .6rem;
+  }
+  nav.toc {
+    background: #fff; border-bottom: 1px solid #e5e7eb;
+    padding: .8rem 2rem; font-size: .9rem;
+  }
+  nav.toc a { color: var(--brand); text-decoration: none; margin-right: 1rem; white-space: nowrap; }
+  nav.toc a:hover { text-decoration: underline; }
+  main { max-width: 1050px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+  h2 {
+    border-bottom: 3px solid var(--brand); padding-bottom: .4rem;
+    margin-top: 2.5rem; font-size: 1.3rem;
+  }
+  h3 { margin-top: 1.8rem; font-size: 1.1rem; color: var(--dark); }
+  h4 { margin-top: 1.3rem; font-size: 1rem; }
+  .card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: 1rem 1.2rem; margin: .8rem 0;
+  }
+  .step {
+    background: #fff; border: 1px solid #e5e7eb; border-left: 5px solid var(--brand);
+    border-radius: 8px; padding: 1rem 1.2rem; margin: 1rem 0;
+  }
+  .step .num {
+    display: inline-block; background: var(--brand); color: #fff;
+    width: 26px; height: 26px; border-radius: 50%; text-align: center;
+    line-height: 26px; font-weight: 700; font-size: .85rem; margin-right: .5rem;
+  }
+  .step .title { font-weight: 700; font-size: 1rem; }
+  .step .where { color: var(--brand); font-size: .85rem; }
+  code, .code {
+    background: var(--code-bg); border: 1px solid #e2e8f0; border-radius: 4px;
+    padding: .1rem .35rem; font-family: 'Cascadia Code', Consolas, monospace; font-size: .85em;
+  }
+  pre.code { display: block; padding: .8rem 1rem; overflow-x: auto; line-height: 1.45; }
+  table { border-collapse: collapse; width: 100%; margin: .8rem 0; font-size: .9rem; }
+  th, td { border: 1px solid #e5e7eb; padding: .5rem .7rem; text-align: left; vertical-align: top; }
+  th { background: #f8fafc; }
+  .ok { color: var(--ok); font-weight: 600; }
+  .warn { color: var(--warn); font-weight: 600; }
+  .danger { color: var(--danger); font-weight: 600; }
+  .note {
+    background: #fffbeb; border-left: 4px solid var(--warn);
+    padding: .6rem 1rem; border-radius: 4px; font-size: .9rem; margin: .8rem 0;
+  }
+  .tip {
+    background: #f0fdf4; border-left: 4px solid var(--ok);
+    padding: .6rem 1rem; border-radius: 4px; font-size: .9rem; margin: .8rem 0;
+  }
+  .dangerbox {
+    background: #fef2f2; border-left: 4px solid var(--danger);
+    padding: .6rem 1rem; border-radius: 4px; font-size: .9rem; margin: .8rem 0;
+  }
+  .checklist li { margin: .3rem 0; }
+  footer { text-align: center; color: #94a3b8; font-size: .8rem; padding: 1.5rem; }
+  @media print {
+    nav.toc { display: none; }
+    body { background: #fff; }
+    .step, .card { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <h1>Documentation administrateur — Kaeged GED</h1>
+  <p>Guide complet des fonctionnalités d'administration de la plateforme : utilisateurs,
+     groupes, rôles et permissions, types et métadonnées, référentiels V02, workflows,
+     audit, paramètres, partage externe et super administration.</p>
+  <p>Application : <code>http://localhost/kaeged/public</code> — comptes : admin tenant
+     <code>admin@demo.local</code> / <code>password123</code> — super admin
+     <code>superadmin@kaeged.local</code> / <code>superadmin123</code></p>
+  <span class="badge">Documentation administrateur — v1.0</span>
+</header>
+
+<nav class="toc">
+  <a href="#introduction">1. Introduction</a>
+  <a href="#utilisateurs">2. Utilisateurs</a>
+  <a href="#groupes">3. Groupes</a>
+  <a href="#roles">4. Rôles &amp; permissions</a>
+  <a href="#types">5. Types &amp; métadonnées</a>
+  <a href="#referentials">6. Référentiels V02</a>
+  <a href="#workflows-admin">7. Workflows</a>
+  <a href="#audit">8. Audit</a>
+  <a href="#parametres">9. Paramètres</a>
+  <a href="#partage">10. Partage externe</a>
+  <a href="#superadmin">11. Super administration</a>
+  <a href="#depannage">12. Dépannage</a>
+</nav>
+
+<main>
+
+<!-- ============ 1. INTRODUCTION ============ -->
+<h2 id="introduction">1. Introduction</h2>
+<div class="card">
+  <p>Le menu <strong>Administration</strong> (sidebar) donne accès à 6 écrans :</p>
+  <table>
+    <tr><th>Écran</th><th>Rôle</th></tr>
+    <tr><td>Utilisateurs</td><td>Gérer les comptes, rôles directs, dimensions, suspension</td></tr>
+    <tr><td>Groupes</td><td>Regrouper des utilisateurs et leur attacher des rôles (héritage)</td></tr>
+    <tr><td>Rôles &amp; permissions</td><td>Définir les droits (catalogue de permissions, portées, refus)</td></tr>
+    <tr><td>Types &amp; métadonnées</td><td>Types documentaires et champs de métadonnées</td></tr>
+    <tr><td>Référentiels</td><td>Domaines, processus, postes, sites, entités, pays (périmètre V02)</td></tr>
+    <tr><td>Audit</td><td>Journal des actions sensibles, filtres, export CSV</td></tr>
+    <tr><td>Paramètres</td><td>Quotas, sécurité, documents, rétention, notifications, partage, IA, branding</td></tr>
+  </table>
+  <p>Le sous-menu <strong>Administration</strong> se déplie au clic et reste ouvert quand on
+     est dans une page admin. Le super administrateur dispose d'un écran séparé
+     « Super Admin → Paramètres plateforme ».</p>
+</div>
+
+<!-- ============ 2. UTILISATEURS ============ -->
+<h2 id="utilisateurs">2. Utilisateurs</h2>
+<div class="card">
+  <h3>2.1 Créer un utilisateur</h3>
+  <ol>
+    <li>Administration → Utilisateurs → formulaire « Créer un utilisateur »</li>
+    <li>Nom, email, <strong>rôle</strong> (obligatoire), mot de passe (optionnel — généré sinon)</li>
+    <li>« Créer » → l'utilisateur est actif ; le quota d'utilisateurs est vérifié
+       (message d'erreur si atteint)</li>
+  </ol>
+  <div class="note">La longueur minimale du mot de passe est celle définie dans
+     Paramètres → Sécurité (défaut 8 caractères).</div>
+
+  <h3>2.2 Modifier un utilisateur</h3>
+  <p>Bouton <strong>Modifier</strong> sur la ligne : nom, email, rôle, groupes (multi-sélection).</p>
+
+  <h3>2.3 Réinitialiser le mot de passe</h3>
+  <p>Bouton <strong>MDP</strong> → saisir le nouveau mot de passe (min. selon politique).</p>
+
+  <h3>2.4 Suspendre / réactiver</h3>
+  <p>Bouton <strong>Suspendre</strong> / <strong>Réactiver</strong> : l'utilisateur suspendu ne peut
+     plus se connecter ni accéder aux ressources (vérifié à chaque requête).</p>
+
+  <h3>2.5 Supprimer (logique)</h3>
+  <p>Bouton <strong>Suppr.</strong> : suppression <strong>logique</strong> (RM-010) — l'historique,
+     les versions et l'audit restent intacts. Un utilisateur ne peut pas se supprimer lui-même.</p>
+
+  <h3>2.6 Dimensions organisationnelles (périmètre V02)</h3>
+  <p>Dans la modale « Modifier » : poste, département, direction, site, entité, pays
+     (listes issues des <strong>Référentiels</strong>). Ces dimensions pilotent le menu
+     « Mes documents ».</p>
+
+  <h3>2.7 Colonne « Permissions effectives »</h3>
+  <p>Affiche l'union des permissions des rôles <strong>directs</strong> et des rôles
+     <strong>hérités des groupes</strong> (badges + tooltip complet + compteur).</p>
+</div>
+
+<!-- ============ 3. GROUPES ============ -->
+<h2 id="groupes">3. Groupes</h2>
+<div class="card">
+  <h3>3.1 Créer un groupe</h3>
+  <p>Administration → Groupes → saisir le nom → « Créer ».</p>
+
+  <h3>3.2 Gérer les membres</h3>
+  <p>Chaque groupe affiche la liste des utilisateurs (sélection multiple) → « Mettre à jour ».
+     Un utilisateur peut appartenir à plusieurs groupes. La suppression d'un groupe ne supprime
+     <strong>jamais</strong> ses utilisateurs.</p>
+
+  <h3>3.3 Rôles du groupe (héritage)</h3>
+  <p>Section « Rôles du groupe (hérités par les membres) » : cocher un ou plusieurs rôles →
+     « Enregistrer les rôles ». <span class="ok">Tous les membres héritent immédiatement</span>
+     de ces rôles (en plus de leurs rôles directs).</p>
+  <div class="tip">Exemple : le groupe « Direction » avec les rôles « Manager » + « Validateur »
+     donne à tous ses membres les permissions de ces deux rôles.</div>
+
+  <h3>3.4 Renommer / supprimer</h3>
+  <p>Boutons « Renommer » (modale) et « Supprimer » (confirmation demandée).</p>
+</div>
+
+<!-- ============ 4. RÔLES ============ -->
+<h2 id="roles">4. Rôles &amp; permissions</h2>
+<div class="card">
+  <h3>4.1 Rôles système prédéfinis</h3>
+  <table>
+    <tr><th>Rôle</th><th>Usage</th></tr>
+    <tr><td>tenant_admin</td><td>Administrateur du tenant (toutes les permissions admin)</td></tr>
+    <tr><td>manager</td><td>Responsable de périmètre (documents + workflow + IA)</td></tr>
+    <tr><td>user</td><td>Utilisateur opérationnel standard</td></tr>
+    <tr><td>auditor</td><td>Auditeur (lecture + accès au journal)</td></tr>
+    <tr><td>validator</td><td>Validateur de workflow</td></tr>
+  </table>
+
+  <h3>4.2 Créer / renommer / dupliquer / supprimer un rôle</h3>
+  <ul class="checklist">
+    <li><strong>Créer</strong> : formulaire en haut de l'écran</li>
+    <li><strong>Renommer</strong> : bouton sur le rôle (rôles système non renommables)</li>
+    <li><strong>Dupliquer</strong> : copie du rôle avec ses permissions (pour créer une variante)</li>
+    <li><strong>Supprimer</strong> : <span class="danger">bloqué</span> pour un rôle système ou un rôle
+       affecté à des utilisateurs</li>
+  </ul>
+
+  <h3>4.3 Catalogue de permissions</h3>
+  <table>
+    <tr><th>Groupe</th><th>Permissions</th></tr>
+    <tr><td>Documents</td><td>view, preview, download, create, edit, delete, restore, archive, comment, share, metadata</td></tr>
+    <tr><td>Workflow</td><td>validate, approve, reject, manage</td></tr>
+    <tr><td>IA</td><td>use, admin</td></tr>
+    <tr><td>Administration</td><td>users, groups, roles, types, workflows, audit, settings, quotas</td></tr>
+  </table>
+
+  <h3>4.4 Portées et refus explicite</h3>
+  <p>Pour chaque permission : choisir la <strong>portée</strong> (tenant / espace / dossier /
+     document) et un identifiant de portée. Cocher <strong>« Refus explicite »</strong> pour
+     bloquer la permission sur ce périmètre.</p>
+  <div class="dangerbox"><strong>Règle RM-008 :</strong> un refus explicite prévaut toujours sur
+     une autorisation héritée ou directe — même si le même utilisateur a la permission via un
+     autre rôle.</div>
+  <div class="tip">Exemple : refuser <code>documents.download</code> avec portée « espace RH »
+     → personne avec ce rôle ne peut télécharger dans l'espace RH, même si le rôle autorise le
+     téléchargement ailleurs.</div>
+</div>
+
+<!-- ============ 5. TYPES & MÉTADONNÉES ============ -->
+<h2 id="types">5. Types &amp; métadonnées</h2>
+<div class="card">
+  <h3>5.1 Types documentaires</h3>
+  <ul class="checklist">
+    <li><strong>Créer</strong> : nom + rétention (jours, vide = illimité)</li>
+    <li><strong>Modifier</strong> : nom, rétention (modale)</li>
+    <li><strong>Supprimer</strong> : <span class="danger">bloqué</span> si des documents utilisent le type</li>
+  </ul>
+  <p>Les 15 familles V02 sont pré-créées : POL, MAN, REF, PRO, PRC, INS, FOR, REG, MOD,
+     RAP, PRE, MAT, TDB, CHK, AUT.</p>
+
+  <h3>5.2 Champs de métadonnées</h3>
+  <table>
+    <tr><th>Type de champ</th><th>Usage</th></tr>
+    <tr><td>text / longtext</td><td>Chaîne courte / longue</td></tr>
+    <tr><td>number</td><td>Nombre</td></tr>
+    <tr><td>date</td><td>Date</td></tr>
+    <tr><td>boolean</td><td>Oui/Non</td></tr>
+    <tr><td>list / multiselect</td><td>Liste à choix unique / multiple (options séparées par virgules)</td></tr>
+    <tr><td>user</td><td>Référence à un utilisateur</td></tr>
+  </table>
+  <p><strong>Modifier / Supprimer</strong> : boutons sur chaque champ. La suppression est
+     <span class="danger">bloquée</span> si des valeurs existent pour ce champ.</p>
+</div>
+
+<!-- ============ 6. RÉFÉRENTIELS ============ -->
+<h2 id="referentials">6. Référentiels V02</h2>
+<div class="card">
+  <p>Administration → <strong>Référentiels</strong> : gère 8 types de listes de référence.</p>
+  <table>
+    <tr><th>Type</th><th>Exemples</th></tr>
+    <tr><td>Domaines</td><td>DOC, GOV, LEGAL, QMS, RISK, FIN, HR, OPS, PUR…</td></tr>
+    <tr><td>Processus</td><td>Gouvernance documentaire, Publication…</td></tr>
+    <tr><td>Postes</td><td>Directeur Général, Responsable Qualité…</td></tr>
+    <tr><td>Départements / Directions</td><td>Qualité, Achats, Finance…</td></tr>
+    <tr><td>Sites / Entités / Pays</td><td>Siège, Entité Groupe, Côte d'Ivoire…</td></tr>
+  </table>
+  <p><strong>Mode opératoire :</strong> onglet du type → nom (+ code optionnel) → « Ajouter ».
+     <span class="ok">Dédoublonnage automatique</span> (insensible à la casse).</p>
+</div>
+
+<!-- ============ 7. WORKFLOWS ============ -->
+<h2 id="workflows-admin">7. Workflows</h2>
+<div class="card">
+  <h3>7.1 Créer un workflow</h3>
+  <ol>
+    <li>Menu Workflows → « Nouveau workflow »</li>
+    <li>Nom + type documentaire associé (optionnel)</li>
+    <li>Ajouter les <strong>étapes</strong> : nom + type d'assignation
+       (utilisateur / groupe / rôle / créateur) + ID de l'assigné</li>
+    <li>« Créer le workflow » — il est actif par défaut</li>
+  </ol>
+
+  <h3>7.2 Activer / désactiver</h3>
+  <p>Bouton sur chaque workflow (les workflows inactifs ne peuvent pas être démarrés).</p>
+
+  <h3>7.3 Déroulement</h3>
+  <p>Depuis la fiche document (onglet Workflow) : « Démarrer le workflow » → le document passe
+     « en revue », des tâches sont créées pour les assignés (visibles dans « Mes tâches »).</p>
+  <ul class="checklist">
+    <li><strong>Valider</strong> : passe à l'étape suivante ; dernière étape → « approuvé »</li>
+    <li><strong>Rejeter</strong> : motif obligatoire → retour brouillon + notification au créateur</li>
+    <li>Une tâche ne peut être traitée que par son assigné (ou délégataire)</li>
+    <li>Chaque décision est horodatée, attribuée et auditée</li>
+  </ul>
+
+  <h3>7.4 Périmètre V02 (règles d'approbation)</h3>
+  <p>Avant le statut « approuvé/applicable », le système vérifie : fichier attaché, version
+     renseignée, propriétaire affecté, date d'application, prochaine date de revue.
+     Une nouvelle version applicable rend l'ancienne obsolète automatiquement.</p>
+</div>
+
+<!-- ============ 8. AUDIT ============ -->
+<h2 id="audit">8. Audit</h2>
+<div class="card">
+  <h3>8.1 Consultation</h3>
+  <p>Administration → Audit : journal des actions sensibles (connexions, documents, versions,
+     partages, droits, workflows, IA, actions admin). Filtres : action (texte), utilisateur,
+     dates de début et fin.</p>
+
+  <h3>8.2 Export CSV</h3>
+  <p>Bouton « Exporter CSV » : télécharge le journal filtré (max 10 000 lignes) avec
+     Date, Utilisateur, Action, Ressource, Détails, IP.</p>
+  <div class="note">Le journal n'est <strong>pas modifiable</strong> via l'interface (table sans
+     updated_at).</div>
+</div>
+
+<!-- ============ 9. PARAMÈTRES ============ -->
+<h2 id="parametres">9. Paramètres</h2>
+<div class="card">
+  <p>Administration → Paramètres : 9 onglets.</p>
+
+  <h3>9.1 Général</h3>
+  <ul class="checklist">
+    <li><strong>Quotas</strong> : stockage (Mo), utilisateurs, taille max de fichier (Mo) — appliqués</li>
+    <li><strong>Langue</strong> (fr/en) et <strong>fuseau horaire</strong> (ex. Europe/Paris)</li>
+  </ul>
+
+  <h3>9.2 Sécurité</h3>
+  <ul class="checklist">
+    <li>MFA obligatoire pour administrateurs / validateurs — <span class="warn">configurable seulement (application V2)</span></li>
+    <li>Expiration de session (minutes) — V2</li>
+    <li>Longueur minimale du mot de passe — <span class="ok">appliquée immédiatement</span></li>
+  </ul>
+
+  <h3>9.3 Documents</h3>
+  <ul class="checklist">
+    <li><strong>Formats autorisés à l'import</strong> (cases MIME) — <span class="ok">appliqués immédiatement</span></li>
+    <li><strong>Verrouillage auto à l'édition</strong> — appliqué</li>
+    <li><strong>Commentaire de version obligatoire</strong> — appliqué</li>
+  </ul>
+
+  <h3>9.4 Rétention</h3>
+  <p>Durée par défaut (jours), purge de la corbeille après N jours, alerte avant suppression.</p>
+
+  <h3>9.5 Notifications</h3>
+  <p>Défauts : tâches (workflows), partages, échéances, notifications par email (SMTP requis).</p>
+
+  <h3>9.6 Partage</h3>
+  <ul class="checklist">
+    <li><strong>Liens externes autorisés</strong> — appliqué (désactivé par défaut)</li>
+    <li>Durée maximale d'un lien (jours), mot de passe requis (optionnel/obligatoire)</li>
+  </ul>
+
+  <h3>9.7 IA</h3>
+  <p>Activation IA du tenant + fournisseurs autorisés (séparés par virgules).</p>
+
+  <h3>9.8 Workflows</h3>
+  <p>Workflow par défaut (utilisé au démarrage manuel).</p>
+
+  <h3>9.9 Branding</h3>
+  <p>Couleur principale (appliquée via variables CSS : sidebar, boutons, barres) + logo (URL).</p>
+
+  <div class="tip">Chaque onglet est enregistré avec le bouton « Enregistrer les paramètres » ;
+     toutes les actions sont auditées (<code>admin.settings.updated</code>,
+     <code>admin.branding.updated</code>).</div>
+</div>
+
+<!-- ============ 10. PARTAGE EXTERNE ============ -->
+<h2 id="partage">10. Partage externe</h2>
+<div class="card">
+  <h3>10.1 Principe</h3>
+  <p>Les documents peuvent être partagés <strong>en interne</strong> (utilisateurs/groupes du
+     tenant) ou via un <strong>lien externe</strong> (si activé dans Paramètres → Partage).</p>
+
+  <h3>10.2 Créer un lien externe</h3>
+  <ol>
+    <li>Fiche document → onglet Partage → section « Lien externe »</li>
+    <li>Droit (consultation ou téléchargement), <strong>expiration obligatoire</strong>,
+       mot de passe optionnel</li>
+    <li>« Créer le lien » → le lien sécurisé s'affiche (à copier)</li>
+  </ol>
+
+  <h3>10.3 Sécurité</h3>
+  <ul class="checklist">
+    <li>Accès par <strong>jeton aléatoire 256 bits stocké haché</strong> — jamais d'URL publique (RM-012)</li>
+    <li>Expiration maximale limitée par la politique du tenant</li>
+    <li>Révocable à tout moment (bouton « Révoquer »)</li>
+    <li>Chaque consultation/téléchargement est <strong>audité</strong></li>
+  </ul>
+</div>
+
+<!-- ============ 11. SUPER ADMIN ============ -->
+<h2 id="superadmin">11. Super administration</h2>
+<div class="card">
+  <p>Accès réservé au super administrateur (<code>superadmin@kaeged.local</code>).</p>
+
+  <h3>11.1 Statistiques globales</h3>
+  <p>Nombre de tenants, utilisateurs, documents, stockage total.</p>
+
+  <h3>11.2 Gestion des tenants</h3>
+  <ul class="checklist">
+    <li><strong>Créer</strong> un tenant (nom, plan, quotas) — les rôles système sont créés
+       automatiquement et les paramètres plateforme sont appliqués en défauts</li>
+    <li><strong>Admin initial (optionnel)</strong> : lors de la création, saisir nom, email
+       et mot de passe (≥ 10 caractères) de l'administrateur de l'entreprise — le compte est
+       créé avec le rôle <code>tenant_admin</code> du tenant et peut se connecter immédiatement.
+       Sans admin fourni, le tenant est créé seul (aucun utilisateur)</li>
+    <li><strong>Créer un admin</strong> pour un tenant existant : bouton « Créer un admin »
+       sur la ligne du tenant dans la liste — même effet (compte + rôle <code>tenant_admin</code>)</li>
+    <li><strong>Suspendre / réactiver</strong> : un tenant suspendu bloque toute connexion
+       de ses utilisateurs (CA-017)</li>
+  </ul>
+  <div class="tip">Le lien « compte admin ↔ entreprise » est porté par
+     <code>users.tenant_id</code> + la relation <code>user_role</code> (rôle
+     <code>tenant_admin</code>). Chaque création d'admin est auditée
+     (<code>superadmin.tenant_admin.created</code>).</div>
+
+  <h3>11.3 Paramètres plateforme</h3>
+  <p>Défauts appliqués aux <strong>nouveaux tenants</strong> : sécurité (MFA, mot de passe),
+     documents (MIME, verrouillage, commentaire), partage externe, IA. Les tenants existants
+     ne sont pas modifiés.</p>
+
+  <h3>11.4 Créer un super administrateur</h3>
+  <p>Nom, email, mot de passe (min. 10 caractères).</p>
+
+  <h3>11.5 Liste &amp; suspension des super administrateurs</h3>
+  <ul class="checklist">
+    <li><strong>Liste</strong> : la page Super Admin affiche tous les comptes super administrateur
+       (nom, email, statut, dernière connexion)</li>
+    <li><strong>Suspendre / réactiver</strong> : bouton par ligne ; un compte suspendu ne peut
+       plus se connecter ; chaque bascule est auditée (<code>superadmin.user.toggled</code>)</li>
+    <li><strong>Garde</strong> : le <strong>dernier super administrateur actif</strong> ne peut pas
+       être suspendu (message d'erreur) — évite de verrouiller la plateforme</li>
+    <li>Un utilisateur non-super-admin n'est pas concerné par ces actions (404)</li>
+  </ul>
+
+  <div class="dangerbox">Le super administrateur n'a <strong>pas</strong>, par défaut, accès au
+     contenu des tenants (RM-003).</div>
+</div>
+
+<!-- ============ 12. DÉPANNAGE ============ -->
+<h2 id="depannage">12. Dépannage</h2>
+<div class="card">
+  <table>
+    <tr><th>Problème</th><th>Cause probable</th><th>Solution</th></tr>
+    <tr><td>« Permission administrateur requise » (403)</td><td>Le rôle n'a pas la permission admin.*</td><td>Rôles &amp; permissions → ajouter la permission au rôle</td></tr>
+    <tr><td>Impossible de créer un utilisateur</td><td>Quota utilisateurs atteint</td><td>Paramètres → Général → augmenter le quota</td></tr>
+    <tr><td>Import d'un format refusé</td><td>MIME non autorisé par la politique</td><td>Paramètres → Documents → cocher le format</td></tr>
+    <tr><td>Rôle système non supprimable</td><td>Protection intégrée</td><td>Dupliquer puis supprimer la copie si besoin</td></tr>
+    <tr><td>Type avec documents non supprimable</td><td>Protection d'intégrité</td><td>Réaffecter les documents vers un autre type</td></tr>
+    <tr><td>Lien externe impossible</td><td>Partage externe désactivé</td><td>Paramètres → Partage → activer</td></tr>
+    <tr><td>Document non approuvable</td><td>Règles §9.3 non satisfaites</td><td>Vérifier fichier, version, propriétaire, dates</td></tr>
+    <tr><td>Document invisible dans « Mes documents »</td><td>Dimensions non renseignées ou statut non applicable</td><td>Vérifier la fiche utilisateur et le statut du document</td></tr>
+  </table>
+</div>
+
+</main>
+
+<footer>
+  Documentation administrateur Kaeged GED — v1.0 · Périmètre SaaS multi-tenant + GED opérationnelle V02
+</footer>
+
+</body>
+</html>

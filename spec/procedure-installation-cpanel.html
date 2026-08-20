@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Procédure d'installation cPanel — Kaeged GED</title>
+<style>
+  :root {
+    --brand: #0d6efd;
+    --dark: #1e293b;
+    --bg: #f4f6f9;
+    --ok: #198754;
+    --warn: #b8860b;
+    --danger: #dc3545;
+    --code-bg: #f1f5f9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    background: var(--bg);
+    color: #1f2937;
+    line-height: 1.55;
+  }
+  header.hero {
+    background: linear-gradient(135deg, var(--dark), #334155);
+    color: #fff;
+    padding: 2.5rem 2rem 2rem;
+  }
+  header.hero h1 { margin: 0 0 .4rem; font-size: 1.6rem; }
+  header.hero p { margin: .2rem 0; color: #cbd5e1; font-size: .95rem; }
+  header.hero .badge {
+    display: inline-block; background: var(--brand); color: #fff;
+    padding: .2rem .7rem; border-radius: 999px; font-size: .8rem; margin-top: .6rem;
+  }
+  nav.toc {
+    background: #fff; border-bottom: 1px solid #e5e7eb;
+    padding: .8rem 2rem; font-size: .9rem;
+  }
+  nav.toc a { color: var(--brand); text-decoration: none; margin-right: 1rem; white-space: nowrap; }
+  nav.toc a:hover { text-decoration: underline; }
+  main { max-width: 1000px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+  h2 {
+    border-bottom: 3px solid var(--brand); padding-bottom: .4rem;
+    margin-top: 2.5rem; font-size: 1.3rem;
+  }
+  h3 { margin-top: 1.8rem; font-size: 1.1rem; color: var(--dark); }
+  .card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: 1rem 1.2rem; margin: .8rem 0;
+  }
+  .step {
+    background: #fff; border: 1px solid #e5e7eb; border-left: 5px solid var(--brand);
+    border-radius: 8px; padding: 1rem 1.2rem; margin: 1rem 0;
+  }
+  .step .num {
+    display: inline-block; background: var(--brand); color: #fff;
+    width: 26px; height: 26px; border-radius: 50%; text-align: center;
+    line-height: 26px; font-weight: 700; font-size: .85rem; margin-right: .5rem;
+  }
+  .step .title { font-weight: 700; font-size: 1rem; }
+  .step .where { color: var(--brand); font-size: .85rem; }
+  code, .code {
+    background: var(--code-bg); border: 1px solid #e2e8f0; border-radius: 4px;
+    padding: .1rem .35rem; font-family: 'Cascadia Code', Consolas, monospace; font-size: .85em;
+  }
+  pre.code { display: block; padding: .8rem 1rem; overflow-x: auto; line-height: 1.45; }
+  table { border-collapse: collapse; width: 100%; margin: .8rem 0; font-size: .9rem; }
+  th, td { border: 1px solid #e5e7eb; padding: .5rem .7rem; text-align: left; vertical-align: top; }
+  th { background: #f8fafc; }
+  .ok { color: var(--ok); font-weight: 600; }
+  .warn { color: var(--warn); font-weight: 600; }
+  .danger { color: var(--danger); font-weight: 600; }
+  .note {
+    background: #fffbeb; border-left: 4px solid var(--warn);
+    padding: .6rem 1rem; border-radius: 4px; font-size: .9rem; margin: .8rem 0;
+  }
+  .tip {
+    background: #f0fdf4; border-left: 4px solid var(--ok);
+    padding: .6rem 1rem; border-radius: 4px; font-size: .9rem; margin: .8rem 0;
+  }
+  .dangerbox {
+    background: #fef2f2; border-left: 4px solid var(--danger);
+    padding: .6rem 1rem; border-radius: 4px; font-size: .9rem; margin: .8rem 0;
+  }
+  .checklist li { margin: .3rem 0; }
+  footer { text-align: center; color: #94a3b8; font-size: .8rem; padding: 1.5rem; }
+  @media print {
+    nav.toc { display: none; }
+    body { background: #fff; }
+    .step, .card { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <h1>Procédure d'installation cPanel — Kaeged GED</h1>
+  <p>Déploiement pas à pas de la plateforme GED SaaS multi-tenant (Laravel 13 / PHP 8.4 / MySQL)
+     sur un hébergement cPanel partagé.</p>
+  <p>Document lié : <code>spec/cahier-des-charges-ged-saas-v1.0.docx</code> (CDG §39 « Contraintes cPanel »)
+     et <code>docs/deploiement.md</code>.</p>
+  <span class="badge">Procédure d'installation — v1.0</span>
+</header>
+
+<nav class="toc">
+  <a href="#prerequis">1. Prérequis</a>
+  <a href="#etape1">2. Base de données</a>
+  <a href="#etape2">3. Upload du code</a>
+  <a href="#etape3">4. Composer &amp; dépendances</a>
+  <a href="#etape4">5. Configuration .env</a>
+  <a href="#etape5">6. Migrations &amp; seed</a>
+  <a href="#etape6">7. Caches &amp; permissions</a>
+  <a href="#etape7">8. Publication (public_html)</a>
+  <a href="#etape8">9. Cron &amp; files</a>
+  <a href="#etape9">10. Sécurité &amp; HTTPS</a>
+  <a href="#verification">11. Vérifications</a>
+  <a href="#depannage">12. Dépannage</a>
+</nav>
+
+<main>
+
+<!-- ============ 1. PRÉREQUIS ============ -->
+<h2 id="prerequis">1. Prérequis</h2>
+<div class="card">
+  <h3>1.1 Vérifier les capacités de l'hébergement</h3>
+  <table>
+    <tr><th>Exigence</th><th>Valeur requise</th><th>Où vérifier (cPanel)</th></tr>
+    <tr><td>Version PHP</td><td><strong>8.4 ou supérieure</strong> (Laravel 13 / Symfony exigent ≥ 8.4.1)</td><td>Sélecteur de version PHP (MultiPHP Manager)</td></tr>
+    <tr><td>Extensions PHP</td><td>pdo_mysql, mbstring, openssl, fileinfo, curl, zip, gd, intl, tokenizer, xml, ctype, json, bcmath</td><td>MultiPHP Manager → extensions</td></tr>
+    <tr><td>Base de données</td><td>MySQL 5.7+ / MariaDB 10.3+</td><td>Assistant Bases de données MySQL</td></tr>
+    <tr><td>Composer</td><td>Disponible en SSH (ou upload de composer.phar)</td><td>Terminal (SSH) ou gestionnaire</td></tr>
+    <tr><td>Cron</td><td>Au moins 1 tâche chaque minute</td><td>« Tâches Cron » (Cron Jobs)</td></tr>
+    <tr><td>SSH / Terminal</td><td>Accès recommandé pour composer et artisan</td><td>« Terminal » dans cPanel</td></tr>
+  </table>
+
+  <div class="dangerbox"><strong>Point bloquant :</strong> si l'hébergeur ne propose que PHP 8.2 ou 8.3,
+  l'installation <strong>échouera</strong> (composer platform check). Contacter l'hébergeur ou
+  choisir un hébergement PHP 8.4. Voir « Seuil d'escalade » en fin de document.</div>
+
+  <h3>1.2 Informations à préparer</h3>
+  <ul class="checklist">
+    <li>Nom de domaine (ex. ged.entreprise.com) et DNS pointant vers l'hébergement</li>
+    <li>Identifiants cPanel (ftp/ssh)</li>
+    <li>Nom de la base + utilisateur + mot de passe à créer (étape 2)</li>
+    <li>Adresse email pour les notifications (SMTP)</li>
+  </ul>
+</div>
+
+<!-- ============ 2. BASE DE DONNÉES ============ -->
+<h2 id="etape1">2. Créer la base de données</h2>
+<div class="step">
+  <span class="num">1</span><span class="title">Ouvrir l'assistant de base de données</span>
+  <div class="where">cPanel → « Assistant Bases de données MySQL »</div>
+  <ol>
+    <li>Créer une base : <code>kaeged_db</code> (préfixe utilisateur automatique, ex. <code>user_kaeged_db</code>)</li>
+    <li>Créer un utilisateur : <code>kaeged_user</code> + mot de passe fort</li>
+    <li>Ajouter l'utilisateur à la base avec <strong>TOUS LES PRIVILÈGES</strong></li>
+  </ol>
+  <p class="ok">Noter : nom complet de la base (avec préfixe), utilisateur, mot de passe — nécessaires à l'étape 4.</p>
+</div>
+
+<!-- ============ 3. UPLOAD ============ -->
+<h2 id="etape2">3. Uploader le code</h2>
+<div class="step">
+  <span class="num">2</span><span class="title">Téléverser les fichiers</span>
+  <div class="where">Gestionnaire de fichiers cPanel ou FTP</div>
+  <div class="dangerbox"><strong>Règle de sécurité :</strong> le code applicatif (hors dossier <code>public/</code>)
+  doit être placé <strong>hors de <code>public_html</code></strong> pour ne pas être accessible en HTTP.</div>
+  <ol>
+    <li>Créer le dossier <code>~/kaeged</code> (à côté de <code>public_html</code>)</li>
+    <li>Uploader l'archive du projet (zip) dans <code>~/kaeged</code> et l'extraire
+      (ou uploader les fichiers via FTP)</li>
+    <li>Structure attendue : <code>~/kaeged/app</code>, <code>~/kaeged/bootstrap</code>,
+      <code>~/kaeged/config</code>, <code>~/kaeged/public</code>, <code>~/kaeged/routes</code>,
+      <code>~/kaeged/storage</code>, <code>~/kaeged/vendor</code> (après composer)…</li>
+  </ol>
+</div>
+
+<!-- ============ 4. COMPOSER ============ -->
+<h2 id="etape3">4. Installer les dépendances (Composer)</h2>
+<div class="step">
+  <span class="num">3</span><span class="title">Lancer Composer</span>
+  <div class="where">cPanel → Terminal (SSH)</div>
+  <pre class="code">cd ~/kaeged
+composer install --no-dev --optimize-autoloader</pre>
+  <p>Si Composer n'est pas disponible : téléverser <code>composer.phar</code> puis
+  <code>php composer.phar install --no-dev --optimize-autoloader</code>.</p>
+  <div class="note">En cas d'erreur « platform check » : vérifier que la version PHP sélectionnée
+  dans MultiPHP est bien <strong>8.4</strong> (et que le terminal utilise le même PHP :
+  <code>php -v</code>).</div>
+</div>
+
+<!-- ============ 5. .ENV ============ -->
+<h2 id="etape4">5. Configurer le fichier .env</h2>
+<div class="step">
+  <span class="num">4</span><span class="title">Créer et configurer .env</span>
+  <div class="where">Gestionnaire de fichiers → ~/kaeged/.env</div>
+  <ol>
+    <li>Copier <code>.env.example</code> vers <code>.env</code> (ou uploader un .env préparé)</li>
+    <li>Éditer les valeurs (voir modèle ci-dessous)</li>
+    <li>Générer la clé : <code>php artisan key:generate</code> (terminal)</li>
+  </ol>
+  <pre class="code">APP_NAME="Kaeged GED"
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://ged.entreprise.com
+
+APP_LOCALE=fr
+APP_FALLBACK_LOCALE=en
+
+LOG_CHANNEL=stack
+LOG_LEVEL=error
+
+DB_CONNECTION=mysql
+DB_HOST=localhost
+DB_PORT=3306
+DB_DATABASE=user_kaeged_db      # nom complet avec préfixe cPanel
+DB_USERNAME=kaeged_user
+DB_PASSWORD=********
+
+SESSION_DRIVER=database
+QUEUE_CONNECTION=database       # file d'attente en base (cPanel sans Redis)
+CACHE_STORE=file
+FILESYSTEM_DISK=local           # documents hors webroot (S3 en option)
+
+# Sauvegardes
+GED_MYSQLDUMP_PATH=mysqldump
+GED_MYSQL_PATH=mysql
+
+# Intégrations (optionnel)
+# GED_STORAGE_DISK=s3           # si stockage objet
+# MAIL_MAILER=smtp
+# MAIL_HOST=smtp.entreprise.com
+# MAIL_PORT=587
+# MAIL_USERNAME=...
+# MAIL_PASSWORD=...
+# MAIL_FROM_ADDRESS=noreply@entreprise.com</pre>
+  <div class="tip"><strong>Sécurité :</strong> ne jamais committer le .env ; le mot de passe de la
+  base reste confidentiel.</div>
+</div>
+
+<!-- ============ 6. MIGRATIONS ============ -->
+<h2 id="etape5">6. Migrations &amp; données initiales</h2>
+<div class="step">
+  <span class="num">5</span><span class="title">Créer les tables et le compte initial</span>
+  <div class="where">cPanel → Terminal (SSH)</div>
+  <pre class="code">cd ~/kaeged
+php artisan migrate --force
+php artisan db:seed --force        # crée le super admin et le tenant démo (à supprimer en prod)</pre>
+  <div class="dangerbox"><strong>Production :</strong> supprimer le tenant « Entreprise Démo SA » et les
+  comptes de démonstration après installation, puis créer vos tenants via le super admin.</div>
+</div>
+
+<!-- ============ 7. CACHES ============ -->
+<h2 id="etape6">7. Caches &amp; permissions</h2>
+<div class="step">
+  <span class="num">6</span><span class="title">Optimiser et protéger</span>
+  <div class="where">Terminal + Gestionnaire de fichiers</div>
+  <pre class="code">cd ~/kaeged
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan event:cache</pre>
+  <ul class="checklist">
+    <li><strong>Permissions</strong> : <code>storage/</code> et <code>bootstrap/cache/</code> en écriture
+      (775 ou 755 selon l'hébergeur)</li>
+    <li><strong>.env protégé</strong> : ajouter au .htaccess de <code>~/kaeged</code> une règle de refus
+      (ou s'assurer que le dossier est hors webroot)</li>
+  </ul>
+</div>
+
+<!-- ============ 8. PUBLICATION ============ -->
+<h2 id="etape7">8. Publier l'application (public_html)</h2>
+<div class="step">
+  <span class="num">7</span><span class="title">Pointer le domaine vers public/</span>
+  <div class="where">Gestionnaire de fichiers</div>
+  <p>Deux options :</p>
+  <h4>Option A — Contenu de public/ dans public_html (recommandée)</h4>
+  <ol>
+    <li>Copier le contenu de <code>~/kaeged/public/</code> vers <code>~/public_html/</code>
+      (<code>index.php</code>, <code>.htaccess</code>, <code>robots.txt</code>…)</li>
+    <li>Éditer <code>public_html/index.php</code> : remplacer les chemins par ceux de
+      <code>~/kaeged</code> (l'index.php contient déjà les chemins relatifs — adapter
+      <code>__DIR__.'/../bootstrap/app.php'</code> en <code>'/home/user/kaeged/bootstrap/app.php'</code>)</li>
+    <li>Créer le lien storage : <code>php ~/kaeged/artisan storage:link</code> puis copier
+      <code>~/kaeged/public/storage</code> vers <code>~/public_html/storage</code></li>
+  </ol>
+  <h4>Option B — Sous-dossier (si plusieurs apps)</h4>
+  <p>Créer un sous-dossier <code>public_html/ged</code> et y placer le contenu de public/,
+     adapter index.php en conséquence.</p>
+  <div class="note">Le fichier <code>.htaccess</code> fourni par Laravel gère le routing et le
+  blocage de l'accès aux fichiers sensibles.</div>
+</div>
+
+<!-- ============ 9. CRON ============ -->
+<h2 id="etape8">9. Planifier les tâches (cron)</h2>
+<div class="step">
+  <span class="num">8</span><span class="title">Configurer le scheduler Laravel</span>
+  <div class="where">cPanel → Tâches Cron</div>
+  <p>Ajouter une tâche <strong>toutes les minutes</strong> :</p>
+  <pre class="code">* * * * * /usr/local/bin/php /home/USER/kaeged/artisan schedule:run >> /dev/null 2>&1</pre>
+  <p>Adapter <code>/usr/local/bin/php</code> au chemin PHP 8.4 de l'hébergement
+  (vérifier avec <code>which php</code> en SSH) et <code>/home/USER</code> au chemin réel.</p>
+  <p>Le scheduler déclenche :</p>
+  <ul class="checklist">
+    <li><strong>02:00</strong> — sauvegarde quotidienne (<code>ged:backup</code>, rétention 30 j)</li>
+    <li><strong>03:00</strong> — rétention documentaire (<code>ged:retention</code>)</li>
+    <li><strong>06:00</strong> — alertes de revue V02 (<code>v02:review-alerts</code>)</li>
+  </ul>
+  <div class="tip">Alternative sans worker : la <strong>file en base</strong> (<code>QUEUE_CONNECTION=database</code>)
+  + <code>schedule:run</code> suffit pour les volumes cibles (1000 utilisateurs, centaines de milliers
+  de documents). Si les jobs deviennent fréquents, migrer vers un VPS avec worker Redis (CDG §39).</div>
+</div>
+
+<!-- ============ 10. SÉCURITÉ ============ -->
+<h2 id="etape9">10. Sécurité &amp; HTTPS</h2>
+<div class="step">
+  <span class="num">9</span><span class="title">Verrouiller l'installation</span>
+  <div class="where">cPanel</div>
+  <ul class="checklist">
+    <li><strong>HTTPS obligatoire</strong> : cPanel → « SSL/TLS » → certificat (Let's Encrypt automatique ou importé)</li>
+    <li><strong>Forcer HTTPS</strong> : dans cPanel « Domains » ou via le .htaccess (redirection 301)</li>
+    <li><strong>APP_DEBUG=false</strong> vérifié (aucun détail technique exposé)</li>
+    <li><strong>Backups</strong> : configurer la sauvegarde de l'hébergeur + déporter les sauvegardes
+      Kaeged (storage/backups) hors du disque mutualisé (FTP/S3)</li>
+    <li><strong>Comptes</strong> : supprimer les comptes démo, forcer MFA sur le super admin</li>
+    <li><strong>Permissions</strong> : vérifier que <code>storage/app/private</code> (documents)
+      n'est jamais accessible via HTTP</li>
+  </ul>
+</div>
+
+<!-- ============ 11. VÉRIFICATIONS ============ -->
+<h2 id="verification">11. Vérifications finales</h2>
+<div class="card">
+  <table>
+    <tr><th>#</th><th>Vérification</th><th>Résultat attendu</th></tr>
+    <tr><td>1</td><td>Ouvrir <code>https://ged.entreprise.com/login</code></td><td class="ok">Page de connexion (200)</td></tr>
+    <tr><td>2</td><td>Se connecter avec le super admin</td><td class="ok">Accès à Super Admin → Tenants</td></tr>
+    <tr><td>3</td><td>Créer un tenant + un admin tenant</td><td class="ok">Connexion possible sur le tenant</td></tr>
+    <tr><td>4</td><td>Importer un document (PDF/TXT)</td><td class="ok">Fichier stocké hors webroot</td></tr>
+    <tr><td>5</td><td><code>php artisan ged:backup</code></td><td class="ok">Sauvegarde créée dans storage/backups</td></tr>
+    <tr><td>6</td><td><code>php artisan schedule:list</code></td><td class="ok">3 tâches planifiées</td></tr>
+    <tr><td>7</td><td>Tester une URL directe de fichier</td><td class="ok">404 / redirection (jamais de fichier brut)</td></tr>
+    <tr><td>8</td><td><code>php artisan test</code> (sur un clone de dev)</td><td class="ok">94 tests / 320 assertions verts</td></tr>
+  </table>
+</div>
+
+<!-- ============ 12. DÉPANNAGE ============ -->
+<h2 id="depannage">12. Dépannage</h2>
+<div class="card">
+  <table>
+    <tr><th>Problème</th><th>Cause probable</th><th>Solution</th></tr>
+    <tr><td>Erreur 500 au chargement</td><td>PHP < 8.4, .env absent, permissions storage</td><td>Vérifier <code>php -v</code>, <code>APP_DEBUG=true</code> temporaire, permissions</td></tr>
+    <tr><td>« Composer detected issues »</td><td>Version PHP du terminal ≠ 8.4</td><td>MultiPHP → PHP 8.4 ; <code>which php</code></td></tr>
+    <tr><td>Connexion base refusée</td><td>Préfixe cPanel ou mot de passe</td><td>Vérifier DB_DATABASE complet (avec préfixe utilisateur)</td></tr>
+    <tr><td>Page blanche après migration</td><td>Caches non recompilés</td><td><code>php artisan config:cache route:cache view:cache</code></td></tr>
+    <tr><td>Assets (CSS) absents</td><td>public/ non copié ou storage:link manquant</td><td>Vérifier public_html contient index.php + .htaccess</td></tr>
+    <tr><td>Téléchargement lent / timeout</td><td>Limites PHP (memory, max_execution)</td><td>Augmenter via MultiPHP ou php.ini</td></tr>
+    <tr><td>Jobs jamais exécutés</td><td>Cron non configuré ou mauvais chemin PHP</td><td>Vérifier la tâche cron et <code>schedule:list</code></td></tr>
+  </table>
+
+  <h3>Seuil d'escalade (CDG §39)</h3>
+  <p>Si le mutualisé atteint ses limites (jobs asynchrones fréquents, stockage local > limites,
+  recherche plein texte/vectorielle centrale, CPU/mémoire insuffisants) : migrer le cœur
+  applicatif vers un <strong>VPS ou service managé</strong> en conservant l'architecture
+  (queue Redis/worker, stockage S3 via <code>GED_STORAGE_DISK=s3</code>, moteur de recherche externe).</p>
+</div>
+
+</main>
+
+<footer>
+  Procédure d'installation cPanel — Kaeged GED · v1.0 · Référence : cahier des charges §39 et docs/deploiement.md
+</footer>
+
+</body>
+</html>

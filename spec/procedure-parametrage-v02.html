@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Procédure de paramétrage — GED documentaire opérationnelle V02</title>
+<style>
+  :root {
+    --brand: #0d6efd;
+    --dark: #1e293b;
+    --bg: #f4f6f9;
+    --ok: #198754;
+    --warn: #b8860b;
+    --danger: #dc3545;
+    --code-bg: #f1f5f9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    background: var(--bg);
+    color: #1f2937;
+    line-height: 1.55;
+  }
+  header.hero {
+    background: linear-gradient(135deg, var(--dark), #334155);
+    color: #fff;
+    padding: 2.5rem 2rem 2rem;
+  }
+  header.hero h1 { margin: 0 0 .4rem; font-size: 1.6rem; }
+  header.hero p { margin: .2rem 0; color: #cbd5e1; font-size: .95rem; }
+  header.hero .badge {
+    display: inline-block; background: var(--brand); color: #fff;
+    padding: .2rem .7rem; border-radius: 999px; font-size: .8rem; margin-top: .6rem;
+  }
+  nav.toc {
+    background: #fff; border-bottom: 1px solid #e5e7eb;
+    padding: .8rem 2rem; font-size: .9rem;
+  }
+  nav.toc a { color: var(--brand); text-decoration: none; margin-right: 1rem; }
+  nav.toc a:hover { text-decoration: underline; }
+  main { max-width: 1000px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+  h2 {
+    border-bottom: 3px solid var(--brand); padding-bottom: .4rem;
+    margin-top: 2.5rem; font-size: 1.3rem;
+  }
+  h3 { margin-top: 1.8rem; font-size: 1.1rem; color: var(--dark); }
+  h4 { margin-top: 1.3rem; font-size: 1rem; }
+  .card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: 1rem 1.2rem; margin: .8rem 0;
+  }
+  .step {
+    background: #fff; border: 1px solid #e5e7eb; border-left: 5px solid var(--brand);
+    border-radius: 8px; padding: 1rem 1.2rem; margin: 1rem 0;
+  }
+  .step .num {
+    display: inline-block; background: var(--brand); color: #fff;
+    width: 26px; height: 26px; border-radius: 50%; text-align: center;
+    line-height: 26px; font-weight: 700; font-size: .85rem; margin-right: .5rem;
+  }
+  .step .title { font-weight: 700; font-size: 1rem; }
+  .step .where { color: var(--brand); font-size: .85rem; }
+  code, .code {
+    background: var(--code-bg); border: 1px solid #e2e8f0; border-radius: 4px;
+    padding: .1rem .35rem; font-family: 'Cascadia Code', Consolas, monospace; font-size: .85em;
+  }
+  pre.code {
+    display: block; padding: .8rem 1rem; overflow-x: auto; line-height: 1.45;
+  }
+  table { border-collapse: collapse; width: 100%; margin: .8rem 0; font-size: .9rem; }
+  th, td { border: 1px solid #e5e7eb; padding: .5rem .7rem; text-align: left; vertical-align: top; }
+  th { background: #f8fafc; }
+  .ok { color: var(--ok); font-weight: 600; }
+  .warn { color: var(--warn); font-weight: 600; }
+  .danger { color: var(--danger); font-weight: 600; }
+  .note {
+    background: #fffbeb; border-left: 4px solid var(--warn);
+    padding: .6rem 1rem; border-radius: 4px; font-size: .9rem; margin: .8rem 0;
+  }
+  .tip {
+    background: #f0fdf4; border-left: 4px solid var(--ok);
+    padding: .6rem 1rem; border-radius: 4px; font-size: .9rem; margin: .8rem 0;
+  }
+  .dangerbox {
+    background: #fef2f2; border-left: 4px solid var(--danger);
+    padding: .6rem 1rem; border-radius: 4px; font-size: .9rem; margin: .8rem 0;
+  }
+  .checklist li { margin: .3rem 0; }
+  footer { text-align: center; color: #94a3b8; font-size: .8rem; padding: 1.5rem; }
+  @media print {
+    nav.toc { display: none; }
+    body { background: #fff; }
+    .step, .card { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <h1>Procédure de paramétrage — GED documentaire opérationnelle V02</h1>
+  <p>Guide pas à pas pour reproduire le système documentaire décrit dans
+     « GED documentaire opérationnelle V02 » sur la plateforme <strong>Kaeged</strong>.</p>
+  <p>Document source : <code>spec/spec-v02.md</code> — cible retenue : application Laravel Kaeged
+     (les points spécifiques à Odoo sont hors périmètre).</p>
+  <span class="badge">Procédure opérationnelle — v1.0</span>
+</header>
+
+<nav class="toc">
+  <a href="#prealables">1. Préalables</a>
+  <a href="#parametrage">2. Paramétrage pas à pas</a>
+  <a href="#mise-en-pratique">3. Mise en pratique</a>
+  <a href="#import">4. Import du registre</a>
+  <a href="#verification">5. Vérifications</a>
+</nav>
+
+<main>
+
+<!-- ============================================================ -->
+<h2 id="prealables">1. Préalables</h2>
+
+<div class="card">
+  <h3>1.1 Environnement requis</h3>
+  <table>
+    <tr><th>Élément</th><th>Exigence</th></tr>
+    <tr><td>Serveur</td><td>XAMPP (Apache + PHP 8.4 + MySQL) ou cPanel — application accessible sur <code>http://localhost/kaeged/public</code></td></tr>
+    <tr><td>Base de données</td><td>MySQL <code>kaeged</code> (root / secret en local)</td></tr>
+    <tr><td>Comptes de démonstration</td><td>Super admin : <code>superadmin@kaeged.local</code> / <code>superadmin123</code> — Admin tenant : <code>admin@demo.local</code> / <code>password123</code></td></tr>
+    <tr><td>Données source</td><td>Registre maître documentaire V02 (fichier CSV à préparer — modèle en §4) + les fichiers documents</td></tr>
+  </table>
+
+  <h3>1.2 Concepts à connaître (mapping V02 → Kaeged)</h3>
+  <table>
+    <tr><th>Concept V02</th><th>Équivalent Kaeged</th><th>Où le paramétrer</th></tr>
+    <tr><td>Section (00-04)</td><td>Espace</td><td>Menu <strong>Espaces</strong></td></tr>
+    <tr><td>Lot</td><td>Dossier</td><td>Menu <strong>Espaces</strong> → créer un dossier</td></tr>
+    <tr><td>Famille documentaire (POL, MAN, PRC…)</td><td>Type documentaire</td><td>Administration → Types &amp; métadonnées</td></tr>
+    <tr><td>Domaine / Processus / Poste / Site / Entité / Pays</td><td>Référentiel</td><td>Administration → Référentiels</td></tr>
+    <tr><td>ID / Code document</td><td>Référence / Code document</td><td>Fiche document (champs)</td></tr>
+    <tr><td>Propriétaire / Vérificateur / Approbateur</td><td>Champs propriétaire / vérificateur / approbateur</td><td>Fiche document (champs V02)</td></tr>
+    <tr><td>Statuts (7)</td><td>Statuts V02 intégrés</td><td>Automatique (workflow)</td></tr>
+    <tr><td>« Documents applicables à mon poste »</td><td>Menu <strong>Mes documents</strong></td><td>Sidebar</td></tr>
+    <tr><td>Accusé de lecture</td><td>Option « accusé requis » + bouton Accuser</td><td>Fiche document + Mes documents</td></tr>
+  </table>
+
+  <div class="tip"><strong>Prérequis fonctionnel :</strong> le super admin doit avoir créé le tenant
+  « Entreprise » (déjà présent en démo). Les 15 familles V02 et 12 référentiels de démonstration
+  sont pré-créés par le seeder — vous pouvez les compléter.</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="parametrage">2. Paramétrage pas à pas</h2>
+
+<h3>2.0 Ordre recommandé</h3>
+<p>Suivre cet ordre garantit que chaque étape dispose des données nécessaires :</p>
+<ol class="checklist">
+  <li>Créer les <strong>sections</strong> (espaces) et <strong>lots</strong> (dossiers) — structure d'arborescence</li>
+  <li>Vérifier/ajouter les <strong>familles documentaires</strong> (types)</li>
+  <li>Créer les <strong>référentiels</strong> (domaines, processus, postes, sites, entités, pays)</li>
+  <li>Compléter les <strong>métadonnées</strong> (26 colonnes du registre)</li>
+  <li>Paramétrer les <strong>droits d'accès</strong> (rôles, groupes, rôles de groupe)</li>
+  <li>Configurer le <strong>workflow</strong> de validation</li>
+  <li>Activer les <strong>options</strong> (accusés de lecture, alertes, partage)</li>
+  <li><strong>Importer</strong> le registre (ou créer les fiches manuellement)</li>
+</ol>
+
+<!-- Étape 1 -->
+<div class="step">
+  <span class="num">1</span><span class="title">Créer les sections (espaces)</span>
+  <div class="where">Menu : Espaces → « Espace »</div>
+  <p>Chaque section validée du registre devient un espace :</p>
+  <table>
+    <tr><th>Code section</th><th>Nom de l'espace à créer</th></tr>
+    <tr><td>00</td><td>00 - Gouvernance documentaire</td></tr>
+    <tr><td>01</td><td>01 - Gouvernance Groupe et juridique</td></tr>
+    <tr><td>02</td><td>02 - Stratégie Groupe, pilotage et performance</td></tr>
+    <tr><td>03</td><td>03 - Organisation Groupe, responsabilités et délégations</td></tr>
+    <tr><td>04</td><td>04 - Management des risques, contrôle interne et conformité</td></tr>
+  </table>
+  <p><strong>Mode opératoire :</strong> Espaces → « Nouvel espace » → saisir le nom → optionnellement
+  une description et une couleur → « Créer ». Répéter pour chaque section.</p>
+</div>
+
+<!-- Étape 2 -->
+<div class="step">
+  <span class="num">2</span><span class="title">Créer les lots (dossiers) dans chaque section</span>
+  <div class="where">Menu : Espaces → (espace) → « Nouveau dossier »</div>
+  <p>Exemple : dans « 00 - Gouvernance documentaire », créer le dossier
+  « Lot 00 - Gouvernance documentaire ». Les dossiers peuvent être imbriqués
+  (sous-dossiers) selon l'évolution du registre.</p>
+  <div class="note">Le classement par lot est <strong>paramétrable</strong> : d'autres lots peuvent
+  être ajoutés au sein d'une section sans impact sur l'existant.</div>
+</div>
+
+<!-- Étape 3 -->
+<div class="step">
+  <span class="num">3</span><span class="title">Vérifier les familles documentaires (types)</span>
+  <div class="where">Administration → Types &amp; métadonnées</div>
+  <p>Le seeder crée les 15 familles V02. Vérifier leur présence :</p>
+  <p><code>POL - Politique, MAN - Manuel, REF - Référentiel, PRO - Processus, PRC - Procédure,
+  INS - Instruction, FOR - Formulaire, REG - Registre, MOD - Modèle, RAP - Rapport,
+  PRE - Preuve, MAT - Matrice, TDB - Tableau de bord, CHK - Checklist, AUT - Autre</code></p>
+  <p><strong>Mode opératoire :</strong> Types &amp; métadonnées → « Nouveau type documentaire »
+  → nom au format « CODE - Nom » → rétention éventuelle (jours) → « Créer ».</p>
+  <div class="warn">La famille <strong>AUT - Autre</strong> doit rester exceptionnelle et contrôlée
+  par l'administrateur GED.</div>
+</div>
+
+<!-- Étape 4 -->
+<div class="step">
+  <span class="num">4</span><span class="title">Créer les référentiels</span>
+  <div class="where">Administration → Référentiels (onglets par type)</div>
+  <p>Créer les listes de référence utilisées pour qualifier les documents et filtrer
+  « Mes documents » :</p>
+  <table>
+    <tr><th>Type</th><th>Exemples à saisir</th></tr>
+    <tr><td>Domaines</td><td>DOC - Documentation, GOV - Gouvernance, LEGAL - Juridique, QMS - Qualité, RISK - Risques, FIN - Finance, HR - RH, OPS - Opérations, PUR - Achats, SALES - Ventes, IT - SI, MAINT - Maintenance, PROD - Production, LOG - Logistique</td></tr>
+    <tr><td>Processus</td><td>Gouvernance documentaire, Publication et diffusion, Gestion des risques, Qualification fournisseur, Réception et stockage…</td></tr>
+    <tr><td>Postes</td><td>Directeur Général, Responsable Qualité, Responsable Achats, Gestionnaire stock, Technicien maintenance, Comptable, Responsable RH, Auditeur interne…</td></tr>
+    <tr><td>Départements</td><td>Qualité, Achats, Finance, RH, Production, Maintenance…</td></tr>
+    <tr><td>Directions</td><td>Direction Générale, Direction Qualité…</td></tr>
+    <tr><td>Sites</td><td>Siège, Site de production, Site logistique…</td></tr>
+    <tr><td>Entités</td><td>Entité Groupe, Filiale…</td></tr>
+    <tr><td>Pays</td><td>Côte d'Ivoire, France…</td></tr>
+  </table>
+  <p><strong>Mode opératoire :</strong> choisir l'onglet du type → saisir nom (+ code optionnel)
+  → « Ajouter ». <span class="ok">Le dédoublonnage est automatique</span> (insensible à la casse).</p>
+  <div class="tip">Ces référentiels serviront aussi à renseigner la fiche utilisateur
+  (poste, département, direction, site, entité, pays) — indispensable pour le menu
+  « Mes documents ».</div>
+</div>
+
+<!-- Étape 5 -->
+<div class="step">
+  <span class="num">5</span><span class="title">Compléter les métadonnées (26 colonnes du registre)</span>
+  <div class="where">Administration → Types &amp; métadonnées → « Nouveau champ de métadonnée »</div>
+  <p>Reprendre les colonnes du registre en champs de métadonnées :</p>
+  <table>
+    <tr><th>Colonne registre</th><th>Champ à créer</th><th>Type</th><th>Obligatoire</th></tr>
+    <tr><td>ID</td><td>ID documentaire</td><td>texte</td><td>oui</td></tr>
+    <tr><td>Section</td><td>Section</td><td>liste</td><td>oui</td></tr>
+    <tr><td>Lot</td><td>Lot</td><td>liste</td><td>oui</td></tr>
+    <tr><td>Code document</td><td>Code document</td><td>texte</td><td>oui</td></tr>
+    <tr><td>Titre</td><td>Titre (champ natif)</td><td>—</td><td>oui</td></tr>
+    <tr><td>Type / Famille</td><td>Type documentaire (champ natif)</td><td>—</td><td>oui</td></tr>
+    <tr><td>Niveau</td><td>Niveau documentaire</td><td>liste</td><td>oui</td></tr>
+    <tr><td>Domaine principal / secondaire</td><td>Domaine (référentiel)</td><td>liste</td><td>oui</td></tr>
+    <tr><td>Processus principal / secondaire</td><td>Processus (référentiel)</td><td>liste</td><td>oui</td></tr>
+    <tr><td>Propriétaire / Vérificateur / Approbateur</td><td>Champs natifs V02</td><td>utilisateur</td><td>selon workflow</td></tr>
+    <tr><td>Périmètre d'application</td><td>Périmètre</td><td>liste</td><td>oui</td></tr>
+    <tr><td>Pays / entité / site</td><td>Référentiels multi-valeurs</td><td>liste multiple</td><td>oui</td></tr>
+    <tr><td>Criticité</td><td>Champ natif criticité</td><td>liste</td><td>oui</td></tr>
+    <tr><td>Fréquence de revue</td><td>Fréquence de revue</td><td>liste</td><td>oui</td></tr>
+    <tr><td>Support</td><td>Support</td><td>liste</td><td>non</td></tr>
+    <tr><td>Preuve associée</td><td>Preuve associée</td><td>texte long</td><td>non</td></tr>
+    <tr><td>Lien Odoo</td><td>Lien / référence externe</td><td>texte</td><td>non</td></tr>
+    <tr><td>Obligation réglementaire</td><td>Obligation réglementaire</td><td>booléen</td><td>oui</td></tr>
+    <tr><td>Version</td><td>Version (gérée par le versioning)</td><td>—</td><td>oui</td></tr>
+    <tr><td>Statut</td><td>Statut (workflow V02)</td><td>—</td><td>oui</td></tr>
+    <tr><td>Commentaire V02</td><td>Commentaire V02</td><td>texte long</td><td>non</td></tr>
+  </table>
+  <p><strong>Mode opératoire :</strong> Types &amp; métadonnées → « Nouveau champ » → nom, type,
+  options (pour les listes), case « Obligatoire » → « Créer ».</p>
+</div>
+
+<!-- Étape 6 -->
+<div class="step">
+  <span class="num">6</span><span class="title">Paramétrer les droits d'accès</span>
+  <div class="where">Administration → Rôles &amp; permissions / Groupes / Utilisateurs</div>
+  <h4>6.1 Rôles (profils V02)</h4>
+  <p>Les rôles système couvrent les profils du document. Vérifier/adapter les permissions :</p>
+  <table>
+    <tr><th>Profil V02</th><th>Rôle Kaeged</th><th>Permissions clés</th></tr>
+    <tr><td>Créateur / Propriétaire</td><td>user / manager</td><td>create, edit (brouillon), comment</td></tr>
+    <tr><td>Vérificateur</td><td>validator</td><td>view, preview, download, workflow.validate</td></tr>
+    <tr><td>Approbateur</td><td>manager / tenant_admin</td><td>workflow.approve, workflow.reject</td></tr>
+    <tr><td>Lecteur</td><td>user (lecture seule possible)</td><td>view, preview (sans download si souhaité)</td></tr>
+    <tr><td>Auditeur</td><td>auditor</td><td>view, preview, admin.audit</td></tr>
+    <tr><td>Administrateur GED</td><td>tenant_admin</td><td>toutes admin.*</td></tr>
+  </table>
+  <p><strong>Mode opératoire :</strong> Rôles &amp; permissions → pour chaque rôle, cocher les
+  permissions, choisir la portée (tenant / espace / dossier / document) et le refus explicite si besoin.</p>
+
+  <h4>6.2 Groupes et rôles de groupe</h4>
+  <p>Créer des groupes métier (Direction, Qualité, Achats…) et leur attacher des rôles :
+  tous les membres héritent automatiquement des rôles du groupe.</p>
+  <p><strong>Mode opératoire :</strong> Administration → Groupes → « Créer » → ajouter les membres
+  → cocher les rôles dans « Rôles du groupe » → « Enregistrer les rôles ».</p>
+  <p class="ok">La colonne « Permissions effectives » de l'écran Utilisateurs permet de vérifier
+  l'union des rôles directs et hérités.</p>
+
+  <h4>6.3 Dimensions utilisateur (poste, département, site…)</h4>
+  <p><strong>Mode opératoire :</strong> Administration → Utilisateurs → « Modifier » → renseigner
+  le poste, département, direction, site, entité, pays (référentiels créés à l'étape 4).</p>
+  <div class="note">Ces dimensions pilotent le menu « Mes documents » : un utilisateur ne voit
+  que les documents liés à ses dimensions ou à ses rôles de propriétaire/vérificateur/approbateur.</div>
+</div>
+
+<!-- Étape 7 -->
+<div class="step">
+  <span class="num">7</span><span class="title">Configurer le workflow de validation</span>
+  <div class="where">Menu : Workflows → « Nouveau workflow »</div>
+  <p>Modéliser le circuit V02 (7 statuts) avec les étapes de validation :</p>
+  <pre class="code">à créer → brouillon → en vérification → en approbation → approuvé/applicable
+                                    ↘ (rejet) → brouillon
+approuvé/applicable → en révision → (nouvelle version) → en vérification
+approuvé/applicable → obsolète/archivé   (remplacement ou retrait)</pre>
+  <p><strong>Mode opératoire :</strong></p>
+  <ol>
+    <li>Workflows → « Nouveau workflow » → nom (ex. « Validation des contrats ») → type documentaire associé (ex. PRC - Procédure)</li>
+    <li>Ajouter les étapes : « Vérification » (assignée au rôle Validator), « Approbation » (assignée au rôle Manager ou tenant_admin)</li>
+    <li>« Créer le workflow » puis l'activer</li>
+  </ol>
+  <h4>Règles de contrôle automatiques (§9.3 du document V02)</h4>
+  <p>Avant le passage à « approuvé/applicable », le système vérifie :</p>
+  <ol class="checklist">
+    <li>un fichier est attaché ;</li>
+    <li>une version est renseignée ;</li>
+    <li>un propriétaire est affecté ;</li>
+    <li>une date d'application est fixée ;</li>
+    <li>une prochaine date de revue est fixée.</li>
+  </ol>
+  <p class="ok">Obsolescence automatique : une nouvelle version applicable rend l'ancienne
+  obsolète/archivée (masquée aux utilisateurs standards, lien remplace/remplacé par).</p>
+</div>
+
+<!-- Étape 8 -->
+<div class="step">
+  <span class="num">8</span><span class="title">Activer les options complémentaires</span>
+  <div class="where">Administration → Paramètres (onglets)</div>
+  <table>
+    <tr><th>Onglet</th><th>Paramètre</th><th>Recommandation V02</th></tr>
+    <tr><td>Documents</td><td>Formats autorisés</td><td>PDF, Word, Excel (documents contrôlés)</td></tr>
+    <tr><td>Documents</td><td>Verrouillage auto à l'édition</td><td>activé</td></tr>
+    <tr><td>Documents</td><td>Commentaire de version obligatoire</td><td>activé</td></tr>
+    <tr><td>Rétention</td><td>Purge corbeille / alerte</td><td>30 jours / 30 jours</td></tr>
+    <tr><td>Notifications</td><td>Tâches, partages, échéances</td><td>activés</td></tr>
+    <tr><td>Partage</td><td>Liens externes</td><td>selon politique (désactivé par défaut)</td></tr>
+    <tr><td>Workflows</td><td>Workflow par défaut</td><td>workflow créé à l'étape 7</td></tr>
+  </table>
+  <p><strong>Mode opératoire :</strong> Paramètres → modifier chaque onglet → « Enregistrer les paramètres ».
+  Les options MIME, verrouillage et commentaire sont <strong>appliquées immédiatement</strong>.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="mise-en-pratique">3. Mise en pratique — scénarios</h2>
+
+<h3>3.1 Créer et faire valider un document (parcours complet)</h3>
+<div class="step">
+  <span class="num">1</span><span class="title">Créer la fiche documentaire</span>
+  <div class="where">Documents → Importer</div>
+  <ol>
+    <li>Titre officiel + référence (ID du registre) + code document (ex. <code>KAE-DOC-POL-001</code>)</li>
+    <li>Section (espace) + Lot (dossier) + Famille (type documentaire)</li>
+    <li>Champs V02 : domaine, processus, propriétaire, vérificateur, approbateur, criticité, dates</li>
+    <li>Déposer le fichier (V01) → « Importer et créer » → statut « brouillon »</li>
+  </ol>
+</div>
+<div class="step">
+  <span class="num">2</span><span class="title">Lancer le workflow</span>
+  <div class="where">Fiche document → onglet Workflow → « Démarrer le workflow »</div>
+  <p>Le document passe « en vérification » ; le vérificateur reçoit une tâche.</p>
+</div>
+<div class="step">
+  <span class="num">3</span><span class="title">Vérifier puis approuver</span>
+  <div class="where">Mes tâches (vérificateur puis approbateur)</div>
+  <ol>
+    <li>Le <strong>vérificateur</strong> ouvre la tâche, vérifie le document → « Valider » (ou « Rejeter » avec motif obligatoire)</li>
+    <li>Le document passe « en approbation » ; l'<strong>approbateur</strong> valide</li>
+    <li>Si toutes les règles §9.3 sont satisfaites → « approuvé/applicable » ; sinon, message listant les règles manquantes</li>
+  </ol>
+  <div class="tip">Pour tester : créer d'abord un document <strong>sans propriétaire</strong> → l'approbation
+  est bloquée avec le message « Un propriétaire doit être affecté… ».</div>
+</div>
+<div class="step">
+  <span class="num">4</span><span class="title">Vérifier dans « Mes documents »</span>
+  <div class="where">Sidebar → Mes documents</div>
+  <p>Le document approuvé apparaît (version active, statut approuvé/applicable) pour les
+  utilisateurs dont les dimensions correspondent. Badges « proche » (≤30 j) / « en retard »
+  sur la prochaine revue.</p>
+</div>
+
+<h3>3.2 Accusé de lecture</h3>
+<div class="step">
+  <span class="num">1</span><span class="title">Activer l'accusé sur un document</span>
+  <div class="where">Fiche document → Métadonnées → case « Accusé de lecture requis »</div>
+</div>
+<div class="step">
+  <span class="num">2</span><span class="title">Accuser lecture</span>
+  <div class="where">Mes documents → bouton « Accuser »</div>
+  <p>Le badge « lu » remplace le bouton ; l'événement est tracé dans l'audit
+  (<code>v02.read_acknowledged</code>).</p>
+</div>
+
+<h3>3.3 Nouvelle version et obsolescence</h3>
+<div class="step">
+  <span class="num">1</span><span class="title">Passer en révision</span>
+  <div class="where">Fiche document → Workflow</div>
+  <p>Le propriétaire/administrateur lance une révision → statut « en révision ».</p>
+</div>
+<div class="step">
+  <span class="num">2</span><span class="title">Créer la nouvelle version</span>
+  <div class="where">Fiche document → onglet Versions → « Créer une version »</div>
+  <p>Version V02 (ou V01.1 mineure avec « [mineur] » dans le commentaire) → relancer le workflow.</p>
+</div>
+<div class="step">
+  <span class="num">3</span><span class="title">Constater l'obsolescence automatique</span>
+  <p>À l'approbation de la nouvelle version : l'ancienne passe « obsolète/archivé »,
+  masquée aux standards, avec lien « remplacé par ». L'audit trace l'événement.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="import">4. Import du registre maître (optionnel)</h2>
+
+<div class="card">
+  <h3>4.1 Préparer le fichier CSV</h3>
+  <p>13 colonnes, séparateur point-virgule <code>;</code>, en-tête obligatoire :</p>
+  <pre class="code">id;code;titre;section;lot;famille;version;statut;proprietaire;date_application;prochaine_revue;domaine;criticite
+001;KAE-DOC-POL-001;Politique de gouvernance documentaire;00 - Gouvernance;Lot 00;POL;V01;approuve_applicable;;2026-01-01;2027-01-01;GOV;critical</pre>
+  <table>
+    <tr><th>Colonne</th><th>Contrainte</th></tr>
+    <tr><td>id</td><td>obligatoire, unique</td></tr>
+    <tr><td>code</td><td>obligatoire, unique (ex. KAE-DOC-POL-001)</td></tr>
+    <tr><td>titre</td><td>obligatoire</td></tr>
+    <tr><td>section / lot</td><td>créés automatiquement si absents</td></tr>
+    <tr><td>famille</td><td>créée automatiquement si absente</td></tr>
+    <tr><td>version</td><td>obligatoire (V01, V02…)</td></tr>
+    <tr><td>statut</td><td>une des 7 valeurs : a_creer, brouillon, en_verification, en_approbation, approuve_applicable, en_revision, obsolete_archive</td></tr>
+    <tr><td>proprietaire</td><td>nom d'un utilisateur existant du tenant</td></tr>
+    <tr><td>date_application / prochaine_revue</td><td>format AAAA-MM-JJ</td></tr>
+    <tr><td>domaine / criticite</td><td>référentiel / standard, important, critical</td></tr>
+  </table>
+
+  <h3>4.2 Lancer l'import</h3>
+  <pre class="code">cd E:\xampp\htdocs\kaeged
+php artisan v02:import registre.csv --tenant=1 --dry-run   # simulation
+php artisan v02:import registre.csv --tenant=1             # exécution</pre>
+  <p>Le rapport affiche : nombre de documents créés, référentiels créés, erreurs ligne par ligne
+  (doublons, statuts invalides, colonnes manquantes rejetés sans création).</p>
+
+  <h3>4.3 Contrôles qualité avant import (recommandés)</h3>
+  <ul class="checklist">
+    <li>Nettoyer les doublons d'ID et de codes documents</li>
+    <li>Harmoniser les libellés des sections/lots/familles</li>
+    <li>Valider les statuts et versions</li>
+    <li>Vérifier que les propriétaires correspondent à des utilisateurs existants</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="verification">5. Vérifications &amp; recette</h2>
+
+<div class="card">
+  <h3>5.1 Liste de contrôle finale</h3>
+  <table>
+    <tr><th>#</th><th>Vérification</th><th>Résultat attendu</th></tr>
+    <tr><td>1</td><td>5 espaces (sections 00-04) créés</td><td class="ok">visibles dans Espaces</td></tr>
+    <tr><td>2</td><td>15 familles V02 présentes</td><td class="ok">Types &amp; métadonnées</td></tr>
+    <tr><td>3</td><td>Référentiels (domaines, processus, postes…)</td><td class="ok">Administration → Référentiels</td></tr>
+    <tr><td>4</td><td>Utilisateurs avec dimensions renseignées</td><td class="ok">colonne « Permissions effectives »</td></tr>
+    <tr><td>5</td><td>Workflow de validation actif</td><td class="ok">Workflows → liste</td></tr>
+    <tr><td>6</td><td>Approbation bloquée si règles §9.3 non satisfaites</td><td class="ok">message d'erreur explicite</td></tr>
+    <tr><td>7</td><td>Nouvelle version → ancienne obsolète</td><td class="ok">lien remplace/remplacé par</td></tr>
+    <tr><td>8</td><td>« Mes documents » filtré par poste</td><td class="ok">2 profils → listes différentes</td></tr>
+    <tr><td>9</td><td>Accusé de lecture tracé</td><td class="ok">audit v02.read_acknowledged</td></tr>
+    <tr><td>10</td><td>Alertes de revue (J-30 / retard)</td><td class="ok">notifications créées</td></tr>
+    <tr><td>11</td><td>Import du registre</td><td class="ok">rapport ok/erreurs</td></tr>
+  </table>
+
+  <h3>5.2 Tests automatisés</h3>
+  <pre class="code">php artisan test        # 92 tests / 308 assertions — tout vert</pre>
+
+  <h3>5.3 Pièges fréquents</h3>
+  <div class="dangerbox"><strong>Document non approuvable :</strong> vérifier propriétaire, date
+  d'application et prochaine revue (règles §9.3).</div>
+  <div class="dangerbox"><strong>Document invisible dans « Mes documents » :</strong> vérifier le
+  statut (approuvé/applicable), la version active et les dimensions de l'utilisateur
+  (poste, département, site…) ou son rôle de propriétaire/vérificateur/approbateur.</div>
+  <div class="dangerbox"><strong>Import rejeté :</strong> vérifier le nombre de colonnes (13),
+  les codes uniques et les statuts (7 valeurs autorisées).</div>
+  <div class="note"><strong>Règle de travail :</strong> toute évolution non prévue au cahier des
+  charges doit être tracée dans <code>docs/evolutions-cahier-des-charges.md</code>.</div>
+</div>
+
+</main>
+
+<footer>
+  Procédure générée pour la plateforme Kaeged — Périmètre GED documentaire opérationnelle V02 ·
+  Source : spec/spec-v02.md
+</footer>
+
+</body>
+</html>
