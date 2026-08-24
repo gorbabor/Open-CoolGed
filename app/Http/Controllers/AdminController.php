@@ -638,8 +638,10 @@ class AdminController extends Controller
 
         $this->tenantSettings()->set($mailValues);
 
-        // Fournisseurs IA : champ texte « séparés par des virgules » → tableau.
-        $providers = array_values(array_filter(array_map('trim', explode(',', (string) $request->input('ai_providers', 'mock')))));
+        // Fournisseurs IA : multi-select (tableau) ou champ texte « séparés par des virgules ».
+        $providers = collect($request->input('ai_providers', ['mock']))
+            ->flatMap(fn ($v) => array_map('trim', explode(',', (string) $v)))
+            ->filter()->values()->all();
 
         $settings->set([
             // Général
@@ -670,11 +672,16 @@ class AdminController extends Controller
             // IA
             'ai_enabled' => $request->boolean('ai_enabled'),
             'ai_providers' => $providers ?: ['mock'],
-            // Clés API LLM du tenant (vide = héritage plateforme) — chiffrées.
-            'openai_api_key' => $request->filled('openai_api_key') ? Crypt::encryptString($request->input('openai_api_key')) : ($settings->get('openai_api_key')),
-            'openai_model' => $request->input('openai_model') ?: ($settings->get('openai_model') ?: 'gpt-4o-mini'),
-            'anthropic_api_key' => $request->filled('anthropic_api_key') ? Crypt::encryptString($request->input('anthropic_api_key')) : ($settings->get('anthropic_api_key')),
-            'anthropic_model' => $request->input('anthropic_model') ?: ($settings->get('anthropic_model') ?: 'claude-3-5-haiku'),
+            // Clés API LLM du tenant (vide = héritage plateforme) — chiffrées, tous les fournisseurs du registry.
+            ...collect(config('llm.providers', []))->mapWithKeys(function ($cfg, $slug) use ($request, $settings) {
+                $keyField = $slug.'_api_key';
+                $modelField = $slug.'_model';
+
+                return [
+                    $keyField => $request->filled($keyField) ? Crypt::encryptString($request->input($keyField)) : ($settings->get($keyField)),
+                    $modelField => $request->input($modelField) ?: ($settings->get($modelField) ?: $cfg['default_model']),
+                ];
+            })->all(),
             // Workflows
             'default_workflow_type' => $request->filled('default_workflow_type') ? (int) $request->input('default_workflow_type') : null,
         ]);
@@ -718,7 +725,7 @@ class AdminController extends Controller
         $this->requireAdmin('admin.settings');
 
         $provider = $request->input('provider', 'openai');
-        if (! in_array($provider, ['openai', 'anthropic'], true)) {
+        if (config('llm.providers.'.$provider) === null) {
             return back()->withErrors(['ai' => 'Fournisseur inconnu.']);
         }
 

@@ -11,7 +11,9 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Contracts\AiProvider;
 use App\Services\Providers\AnthropicProvider;
+use App\Services\Providers\GeminiProvider;
 use App\Services\Providers\MockAiProvider;
+use App\Services\Providers\OpenAiCompatibleProvider;
 use App\Services\Providers\OpenAiProvider;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
@@ -27,15 +29,28 @@ class AiService
 
         $platform = PlatformSettings::instance()->settings ?? [];
 
-        $openaiKey = $this->decryptKey($platform['openai_api_key'] ?? null);
-        if ($openaiKey !== null) {
-            $this->providers['openai'] = new OpenAiProvider($openaiKey, $platform['openai_model'] ?? 'gpt-4o-mini');
+        foreach (config('llm.providers', []) as $slug => $cfg) {
+            $key = $this->decryptKey($platform[$slug.'_api_key'] ?? null);
+            if ($key === null) {
+                continue;
+            }
+            $provider = $this->buildProvider($slug, $cfg, $key, $platform[$slug.'_model'] ?? $cfg['default_model']);
+            if ($provider !== null) {
+                $this->providers[$slug] = $provider;
+            }
         }
+    }
 
-        $anthropicKey = $this->decryptKey($platform['anthropic_api_key'] ?? null);
-        if ($anthropicKey !== null) {
-            $this->providers['anthropic'] = new AnthropicProvider($anthropicKey, $platform['anthropic_model'] ?? 'claude-3-5-haiku');
-        }
+    /** Instancie le driver adéquat selon la config du registry (driver openai_compat / openai / anthropic / gemini). */
+    private function buildProvider(string $slug, array $cfg, string $key, string $model): ?AiProvider
+    {
+        return match ($cfg['driver'] ?? 'openai_compat') {
+            'openai' => new OpenAiProvider($key, $model),
+            'anthropic' => new AnthropicProvider($key, $model),
+            'gemini' => new GeminiProvider($key, $model),
+            'openai_compat' => new OpenAiCompatibleProvider($slug, $key, $cfg['base_url'], $model),
+            default => null,
+        };
     }
 
     private function decryptKey(?string $value): ?string
@@ -78,7 +93,7 @@ class AiService
         return $this->decryptKey($platform[$provider.'_api_key'] ?? null);
     }
 
-    /** Modèle résolu : tenant > plateforme > défaut. */
+    /** Modèle résolu : tenant > plateforme > défaut du registry. */
     public function resolveModel(Tenant $tenant, string $provider, string $default): string
     {
         $tenantSettings = $tenant->settings ?? [];
@@ -89,6 +104,12 @@ class AiService
         $platform = PlatformSettings::instance()->settings ?? [];
 
         return ! empty($platform[$provider.'_model']) ? $platform[$provider.'_model'] : $default;
+    }
+
+    /** Défaut du registry pour un fournisseur (modèle par défaut du catalogue). */
+    public function defaultModelFor(string $provider): string
+    {
+        return config('llm.providers.'.$provider.'.default_model', 'gpt-4o-mini');
     }
 
     /**
@@ -150,7 +171,7 @@ class AiService
                 continue;
             }
             // Provider enregistré manuellement (ex. adaptateur custom) : utilisé tel quel.
-            if (isset($this->providers[$slug]) && ! in_array($slug, ['openai', 'anthropic'], true)) {
+            if (isset($this->providers[$slug]) && ! isset(config('llm.providers')[$slug])) {
                 $provider = $this->providers[$slug];
                 break;
             }
@@ -158,11 +179,12 @@ class AiService
             if ($key === null) {
                 continue;
             }
-            $provider = match ($slug) {
-                'openai' => new OpenAiProvider($key, $this->resolveModel($tenant, 'openai', 'gpt-4o-mini')),
-                'anthropic' => new AnthropicProvider($key, $this->resolveModel($tenant, 'anthropic', 'claude-3-5-haiku')),
-                default => $this->providers[$slug] ?? $this->providers['mock'],
-            };
+            $cfg = config('llm.providers.'.$slug);
+            if ($cfg === null) {
+                $provider = $this->providers[$slug] ?? $this->providers['mock'];
+                break;
+            }
+            $provider = $this->buildProvider($slug, $cfg, $key, $this->resolveModel($tenant, $slug, $cfg['default_model']));
             break;
         }
 
@@ -216,13 +238,17 @@ class AiService
             throw new \RuntimeException("Aucune clé API configurée pour « {$provider} » (ni tenant, ni plateforme).");
         }
 
-        $model = $this->resolveModel($tenant, $provider, $provider === 'openai' ? 'gpt-4o-mini' : 'claude-3-5-haiku');
+        $cfg = config('llm.providers.'.$provider);
+        if ($cfg === null) {
+            throw new \RuntimeException("Fournisseur inconnu : {$provider}");
+        }
 
-        $providerInstance = match ($provider) {
-            'openai' => new OpenAiProvider($key, $model),
-            'anthropic' => new AnthropicProvider($key, $model),
-            default => throw new \RuntimeException("Fournisseur inconnu : {$provider}"),
-        };
+        $providerInstance = $this->buildProvider(
+            $provider,
+            $cfg,
+            $key,
+            $this->resolveModel($tenant, $provider, $cfg['default_model']),
+        );
 
         $dummy = new DocumentVersion;
         $dummy->extracted_text = 'ping';

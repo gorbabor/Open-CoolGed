@@ -137,12 +137,17 @@ class SuperAdminController extends Controller
             'external_sharing_enabled' => $request->boolean('external_sharing_enabled'),
             'external_share_max_days' => $request->integer('external_share_max_days', 30),
             'ai_enabled' => $request->boolean('ai_enabled'),
-            'ai_providers' => array_values(array_filter(array_map('trim', explode(',', (string) $request->input('ai_providers', 'mock'))))) ?: ['mock'],
-            // Clés API LLM (chiffrées) + modèles — hérités par les tenants.
-            'openai_api_key' => $request->filled('openai_api_key') ? Crypt::encryptString($request->input('openai_api_key')) : ($settings->get('openai_api_key')),
-            'openai_model' => $request->input('openai_model') ?: 'gpt-4o-mini',
-            'anthropic_api_key' => $request->filled('anthropic_api_key') ? Crypt::encryptString($request->input('anthropic_api_key')) : ($settings->get('anthropic_api_key')),
-            'anthropic_model' => $request->input('anthropic_model') ?: 'claude-3-5-haiku',
+            'ai_providers' => collect($request->input('ai_providers', ['mock']))->flatMap(fn ($v) => array_map('trim', explode(',', (string) $v)))->filter()->values()->all() ?: ['mock'],
+            // Clés API LLM (chiffrées) + modèles — hérités par les tenants (tous les fournisseurs du registry).
+            ...collect(config('llm.providers', []))->mapWithKeys(function ($cfg, $slug) use ($request, $settings) {
+                $keyField = $slug.'_api_key';
+                $modelField = $slug.'_model';
+
+                return [
+                    $keyField => $request->filled($keyField) ? Crypt::encryptString($request->input($keyField)) : ($settings->get($keyField)),
+                    $modelField => $request->input($modelField) ?: ($settings->get($modelField) ?: $cfg['default_model']),
+                ];
+            })->all(),
         ]);
 
         $this->audit->log('superadmin.platform_settings.updated', 'tenant', null, ['settings' => array_keys($request->all())]);
@@ -163,7 +168,7 @@ class SuperAdminController extends Controller
     public function testAi(Request $request)
     {
         $provider = $request->input('provider', 'openai');
-        if (! in_array($provider, ['openai', 'anthropic'], true)) {
+        if (config('llm.providers.'.$provider) === null) {
             return back()->withErrors(['ai' => 'Fournisseur inconnu.']);
         }
 

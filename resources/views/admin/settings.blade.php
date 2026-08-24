@@ -200,29 +200,31 @@
                     <label class="form-check-label" for="aiEnabled">IA activée pour ce tenant</label>
                 </div>
                 <div class="mb-2">
-                    <label class="form-label small">Fournisseurs autorisés (séparés par des virgules)</label>
-                    <input type="text" name="ai_providers" class="form-control" value="{{ implode(',', is_array($settings['ai_providers'] ?? ['mock']) ? $settings['ai_providers'] : ['mock']) }}">
-                    <div class="form-text">Ex. : mock, openai, anthropic — seuls les fournisseurs avec une clé configurée sont réellement utilisés.</div>
+                    <label class="form-label small">Fournisseurs autorisés</label>
+                    <select name="ai_providers[]" class="form-select" multiple size="6">
+                        <option value="mock" @selected(in_array('mock', is_array($settings['ai_providers'] ?? ['mock']) ? $settings['ai_providers'] : ['mock']))>Mock (local, gratuit)</option>
+                        @foreach (config('llm.providers', []) as $slug => $cfg)
+                            <option value="{{ $slug }}" @selected(in_array($slug, is_array($settings['ai_providers'] ?? []) ? $settings['ai_providers'] : []))>{{ $cfg['label'] }}</option>
+                        @endforeach
+                    </select>
+                    <div class="form-text">Maintenez Ctrl (ou Cmd) pour sélectionner plusieurs fournisseurs — seuls ceux avec une clé configurée sont réellement utilisés.</div>
                 </div>
                 <hr>
                 <h6 class="small text-muted">Clés API LLM (chiffrées — vide = héritage plateforme)</h6>
                 <div class="row">
-                    <div class="col-md-6 mb-2">
-                        <label class="form-label small">Clé API OpenAI</label>
-                        <input type="password" name="openai_api_key" class="form-control" value="" autocomplete="new-password" placeholder="{{ ! empty($settings['openai_api_key']) ? '•••••••• (laisser vide pour conserver)' : 'sk-… (sinon héritée)' }}">
-                        <label class="form-label small mt-2">Modèle OpenAI</label>
-                        <input type="text" name="openai_model" class="form-control" value="{{ $settings['openai_model'] ?? 'gpt-4o-mini' }}">
-                    </div>
-                    <div class="col-md-6 mb-2">
-                        <label class="form-label small">Clé API Anthropic</label>
-                        <input type="password" name="anthropic_api_key" class="form-control" value="" autocomplete="new-password" placeholder="{{ ! empty($settings['anthropic_api_key']) ? '•••••••• (laisser vide pour conserver)' : 'sk-ant-… (sinon héritée)' }}">
-                        <label class="form-label small mt-2">Modèle Anthropic</label>
-                        <input type="text" name="anthropic_model" class="form-control" value="{{ $settings['anthropic_model'] ?? 'claude-3-5-haiku' }}">
-                    </div>
+                    @foreach (config('llm.providers', []) as $slug => $cfg)
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label small">{{ $cfg['label'] }} — clé API</label>
+                            <input type="password" name="{{ $slug }}_api_key" class="form-control" value="" autocomplete="new-password" placeholder="{{ ! empty($settings[$slug.'_api_key']) ? '•••••••• (laisser vide pour conserver)' : $slug.'-clé… (sinon héritée)' }}">
+                            <label class="form-label small mt-2">Modèle</label>
+                            <input type="text" name="{{ $slug }}_model" class="form-control" value="{{ $settings[$slug.'_model'] ?? $cfg['default_model'] }}">
+                        </div>
+                    @endforeach
                 </div>
-                <div class="d-flex align-items-center gap-2 mt-2">
-                    <button class="btn btn-outline-primary btn-sm" formaction="{{ route('admin.settings.test-ai') }}" name="provider" value="openai">Tester OpenAI</button>
-                    <button class="btn btn-outline-primary btn-sm" formaction="{{ route('admin.settings.test-ai') }}" name="provider" value="anthropic">Tester Anthropic</button>
+                <div class="d-flex align-items-center gap-2 mt-2 flex-wrap">
+                    @foreach (config('llm.providers', []) as $slug => $cfg)
+                        <button class="btn btn-outline-primary btn-sm" formaction="{{ route('admin.settings.test-ai') }}" name="provider" value="{{ $slug }}">Tester {{ $cfg['label'] }}</button>
+                    @endforeach
                     <span class="small text-muted">Teste la clé résolue (tenant ou plateforme) — nécessite l'enregistrement préalable des paramètres.</span>
                 </div>
             </div>

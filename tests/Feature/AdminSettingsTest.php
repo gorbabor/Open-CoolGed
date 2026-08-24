@@ -281,7 +281,9 @@ class AdminSettingsTest extends TestCase
 
         $this->get(route('admin.settings'))
             ->assertOk()
-            ->assertSee('mock,openai');
+            ->assertSee('ai_providers')
+            ->assertSee('Anthropic Claude')
+            ->assertSee('Google Gemini');
     }
 
     public function test_branding_is_applied_in_layout(): void
