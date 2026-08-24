@@ -30,6 +30,14 @@ class TenantSettings
         'notif_shares' => true,
         'notif_deadlines' => true,
         'email_notifications' => false,
+        // Messagerie (SMTP par tenant)
+        'mail_enabled' => false,
+        'smtp_host' => null,
+        'smtp_port' => 587,
+        'smtp_username' => null,
+        'smtp_password' => null,
+        'smtp_from_address' => null,
+        'smtp_from_name' => null,
         // Partage externe
         'external_sharing_enabled' => false,
         'external_share_max_days' => 30,

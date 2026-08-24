@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\NotificationEmail;
 use App\Models\AuditLog;
 use App\Models\DocumentType;
 use App\Models\Group;
@@ -12,13 +13,17 @@ use App\Models\RolePermission;
 use App\Models\Space;
 use App\Models\User;
 use App\Models\Workflow;
+use App\Services\AiService;
 use App\Services\AuditService;
 use App\Services\DocumentService;
+use App\Services\MailSettingsService;
 use App\Services\PermissionService;
 use App\Services\QuotaService;
 use App\Services\StorageService;
 use App\Services\TenantSettings;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -605,14 +610,33 @@ class AdminController extends Controller
         ]);
 
         // Branding intégré au formulaire principal (1 seul bouton d'enregistrement).
-        if ($request->has('brand_color') || $request->has('brand_logo_url')) {
+        if ($request->hasAny(['brand_color', 'brand_color_custom', 'brand_logo_url', 'brand_name', 'theme', 'theme_mode'])) {
             $tenant->update([
                 'branding' => [
-                    'color' => $request->input('brand_color') ?: null,
+                    'color' => $request->boolean('brand_color_custom') ? ($request->input('brand_color') ?: null) : null,
                     'logo_url' => $request->input('brand_logo_url') ?: null,
+                    'brand_name' => $request->input('brand_name') ?: null,
+                    'theme' => $request->input('theme') ?: null,
+                    'theme_mode' => $request->input('theme_mode') ?: null,
                 ],
             ]);
         }
+
+        // Messagerie SMTP par tenant (mot de passe chiffré).
+        $mailValues = [
+            'mail_enabled' => $request->boolean('mail_enabled'),
+            'smtp_host' => $request->input('smtp_host') ?: null,
+            'smtp_port' => $request->integer('smtp_port', 587),
+            'smtp_username' => $request->input('smtp_username') ?: null,
+            'smtp_from_address' => $request->input('smtp_from_address') ?: null,
+            'smtp_from_name' => $request->input('smtp_from_name') ?: null,
+        ];
+
+        if ($request->filled('smtp_password')) {
+            $mailValues['smtp_password'] = Crypt::encryptString($request->input('smtp_password'));
+        }
+
+        $this->tenantSettings()->set($mailValues);
 
         // Fournisseurs IA : champ texte « séparés par des virgules » → tableau.
         $providers = array_values(array_filter(array_map('trim', explode(',', (string) $request->input('ai_providers', 'mock')))));
@@ -646,6 +670,11 @@ class AdminController extends Controller
             // IA
             'ai_enabled' => $request->boolean('ai_enabled'),
             'ai_providers' => $providers ?: ['mock'],
+            // Clés API LLM du tenant (vide = héritage plateforme) — chiffrées.
+            'openai_api_key' => $request->filled('openai_api_key') ? Crypt::encryptString($request->input('openai_api_key')) : ($settings->get('openai_api_key')),
+            'openai_model' => $request->input('openai_model') ?: ($settings->get('openai_model') ?: 'gpt-4o-mini'),
+            'anthropic_api_key' => $request->filled('anthropic_api_key') ? Crypt::encryptString($request->input('anthropic_api_key')) : ($settings->get('anthropic_api_key')),
+            'anthropic_model' => $request->input('anthropic_model') ?: ($settings->get('anthropic_model') ?: 'claude-3-5-haiku'),
             // Workflows
             'default_workflow_type' => $request->filled('default_workflow_type') ? (int) $request->input('default_workflow_type') : null,
         ]);
@@ -653,6 +682,55 @@ class AdminController extends Controller
         $this->audit->log('admin.settings.updated', 'tenant', $tenant->id, $tenant->getChanges());
 
         return back()->with('success', 'Paramètres enregistrés.');
+    }
+
+    /** Envoi d'un email de test depuis la messagerie du tenant (Paramètres → Messagerie). */
+    public function testMail(Request $request)
+    {
+        $this->requireAdmin('admin.settings');
+
+        $tenant = auth()->user()->tenant;
+        $service = app(MailSettingsService::class);
+
+        if (! $service->enabled($tenant)) {
+            return back()->withErrors(['mail' => 'La messagerie n\'est pas activée ou le serveur SMTP n\'est pas renseigné.']);
+        }
+
+        try {
+            $service->configure($tenant);
+            Mail::to(auth()->user()->email)->send(new NotificationEmail(
+                title: 'Test de messagerie — '.$service->fromName($tenant),
+                body: 'Cet email confirme que la messagerie SMTP de votre organisation est correctement configurée.',
+                appName: $service->fromName($tenant),
+            ));
+
+            $this->audit->log('admin.settings.mail_test', 'tenant', $tenant->id);
+
+            return back()->with('success', 'Email de test envoyé à '.auth()->user()->email.'.');
+        } catch (\Throwable $e) {
+            return back()->withErrors(['mail' => 'Échec de l\'envoi : '.$e->getMessage()]);
+        }
+    }
+
+    /** Test de connexion à un fournisseur LLM (onglet IA) — clé résolue tenant > plateforme. */
+    public function testAi(Request $request)
+    {
+        $this->requireAdmin('admin.settings');
+
+        $provider = $request->input('provider', 'openai');
+        if (! in_array($provider, ['openai', 'anthropic'], true)) {
+            return back()->withErrors(['ai' => 'Fournisseur inconnu.']);
+        }
+
+        try {
+            app(AiService::class)->testConnection(auth()->user()->tenant, $provider);
+
+            $this->audit->log('admin.settings.ai_test', 'tenant', auth()->user()->tenant_id, ['provider' => $provider]);
+
+            return back()->with('success', "Connexion à {$provider} réussie.");
+        } catch (\Throwable $e) {
+            return back()->withErrors(['ai' => 'Échec de la connexion : '.$e->getMessage()]);
+        }
     }
 
     /*

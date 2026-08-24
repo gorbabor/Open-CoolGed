@@ -40,6 +40,9 @@ Route::middleware(['auth', 'tenant.context', 'tenant.active'])->group(function (
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
     Route::post('/profile/mfa/enable', [ProfileController::class, 'enableMfa'])->name('profile.mfa.enable');
     Route::post('/profile/mfa/disable', [ProfileController::class, 'disableMfa'])->name('profile.mfa.disable');
+    Route::post('/profile/theme-mode', [ProfileController::class, 'updateThemeMode'])->name('profile.theme-mode');
+    Route::post('/profile/theme', [ProfileController::class, 'updateTheme'])->name('profile.theme');
+    Route::post('/profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
 
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
     Route::get('/documents/create', [DocumentController::class, 'create'])->name('documents.create');
@@ -140,6 +143,8 @@ Route::middleware(['auth', 'tenant.context', 'tenant.active'])->group(function (
         Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
         Route::post('/settings', [AdminController::class, 'updateSettings'])->name('settings.update');
         Route::post('/settings/branding', [AdminController::class, 'updateBranding'])->name('settings.branding');
+        Route::post('/settings/test-mail', [AdminController::class, 'testMail'])->name('settings.test-mail');
+        Route::post('/settings/test-ai', [AdminController::class, 'testAi'])->name('settings.test-ai');
 
         Route::get('/referentials', [V02Controller::class, 'referentials'])->name('referentials');
         Route::post('/referentials', [V02Controller::class, 'storeReferential'])->name('referentials.store');
@@ -157,4 +162,5 @@ Route::middleware(['auth', 'tenant.context', 'superadmin'])->prefix('superadmin'
     Route::post('/super-admins', [SuperAdminController::class, 'storeSuperAdmin'])->name('superadmins.store');
     Route::get('/settings', [SuperAdminController::class, 'platformSettings'])->name('settings');
     Route::post('/settings', [SuperAdminController::class, 'updatePlatformSettings'])->name('settings.update');
+    Route::post('/settings/test-ai', [SuperAdminController::class, 'testAi'])->name('settings.test-ai');
 });

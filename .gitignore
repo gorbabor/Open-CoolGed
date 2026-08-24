@@ -34,3 +34,7 @@ Credentials*.txt
 tmp_*.php
 cdg_extract.txt
 .playwright-cli/
+
+# Artefacts de déploiement cPanel
+deploy-opencoolged.sh
+opencoolged-deploy.zip

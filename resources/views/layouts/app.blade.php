@@ -4,6 +4,14 @@
         ? (auth()->user()->tenant->branding['color'] ?? null) : null;
     $brandLogo = auth()->check() && ! auth()->user()->isSuperAdmin()
         ? (auth()->user()->tenant->branding['logo_url'] ?? null) : null;
+    // Thème visuel : registry (tenant > plateforme > kami) + mode (user > tenant > plateforme > auto).
+    $themeRegistry = app(\App\Themes\ThemeRegistry::class);
+    $themeSlug = $themeRegistry->resolveTheme();
+    $themeMode = $themeRegistry->resolveMode();
+    $theme = $themeRegistry->get($themeSlug);
+    $palette = $themeRegistry->palette($themeMode === 'dark' ? 'dark' : 'light');
+    $effectiveAccent = $brandColor ?? $palette['accent'];
+    $accentRgb = implode(',', array_map('hexdec', str_split(ltrim($effectiveAccent, '#'), 2)));
     // Menu Administration : visible uniquement selon les permissions effectives
     // (rôles directs + rôles des groupes) — un utilisateur sans permission admin.*
     // ne voit aucun lien d'administration.
@@ -19,33 +27,90 @@
     $adminVisible = auth()->check() && ! auth()->user()->isSuperAdmin()
         ? array_filter($adminLinks, fn ($l) => app(\App\Services\PermissionService::class)->can(auth()->user(), $l['perm']))
         : [];
+    $nextMode = $themeMode === 'dark' ? 'light' : 'dark';
 @endphp
 <!DOCTYPE html>
 <html lang="{{ auth()->check() ? (auth()->user()->tenant->settings['language'] ?? 'fr') : 'fr' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Kaeged GED') — {{ config('app.name') }}</title>
+    <title>@yield('title', 'Kaeged GED') — {{ app_display_name() }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    @if ($theme['fontLink'])
+        <link href="https://fonts.googleapis.com/css2?{{ $theme['fontLink'] }}&display=swap" rel="stylesheet">
+    @endif
     <style>
-        :root { --brand: {{ $brandColor ?? '#0d6efd' }}; }
-        body { background: #f4f6f9; }
-        .sidebar { min-height: 100vh; background: #1e293b; }
-        .sidebar .nav-link { color: #cbd5e1; }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: var(--brand); color: #fff; }
-        .sidebar .brand { color: #fff; font-weight: 700; padding: 1rem; }
+        :root {
+            --brand: {{ $effectiveAccent }};
+            --color-background: {{ $palette['background'] }};
+            --color-surface: {{ $palette['surface'] }};
+            --color-foreground: {{ $palette['foreground'] }};
+            --color-muted: {{ $palette['muted'] }};
+            --color-accent: {{ $effectiveAccent }};
+            --color-accent-rgb: {{ $accentRgb }};
+            --color-accent-hover: color-mix(in srgb, var(--brand), #000 12%);
+            --font-body: {!! $theme['font'] !!};
+            --font-display: {!! $theme['font'] !!};
+            --radius: {{ $theme['radius'] }};
+            --border: 1px solid {{ $themeMode === 'dark' ? 'rgba(248, 250, 252, 0.12)' : 'rgba(15, 23, 42, 0.08)' }};
+        }
+        html { scroll-behavior: smooth; }
+        body { background: var(--color-background); color: var(--color-foreground); font-family: var(--font-body); }
+        h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { font-family: var(--font-display); color: var(--color-foreground); }
+        a { color: var(--color-accent); text-underline-offset: 0.15em; }
+        :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+        .sidebar { min-height: 100vh; display: flex; flex-direction: column; background: var(--color-surface); border-right: var(--border); }
+        .sidebar .nav-link { color: var(--color-foreground); border-left: 3px solid transparent; border-radius: 0; transition: background 150ms ease, border-color 150ms ease, color 150ms ease; }
+        .sidebar .nav-link:hover { background: rgba(var(--color-accent-rgb), 0.05); color: var(--color-accent-hover); }
+        .sidebar .nav-link.active { border-left-color: var(--color-accent) !important; background: rgba(var(--color-accent-rgb), 0.07); color: var(--color-accent-hover) !important; font-weight: 700; }
+        .sidebar .brand { color: var(--color-foreground); font-weight: 700; padding: 1rem; border-bottom: var(--border); }
+        .sidebar .brand:hover { color: var(--color-accent-hover); }
         .content { padding: 1.5rem; }
-        .card { border: none; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-        .btn-primary { background-color: var(--brand); border-color: var(--brand); }
-        .btn-primary:hover { background-color: color-mix(in srgb, var(--brand), #000 12%); border-color: var(--brand); }
-        .btn-outline-primary { color: var(--brand); border-color: var(--brand); }
-        .btn-outline-primary:hover { background-color: var(--brand); border-color: var(--brand); }
-        .progress-bar { background-color: var(--brand); }
-        .text-primary { color: var(--brand) !important; }
+        .card { border: var(--border); border-radius: var(--radius); box-shadow: none; background: var(--color-surface); }
+        .btn { border-radius: var(--radius); }
+        .btn-primary { background-color: var(--color-accent); border-color: var(--color-accent); }
+        .btn-primary:hover { background-color: var(--color-accent-hover); border-color: var(--color-accent); }
+        .btn-outline-primary { color: var(--color-accent); border-color: var(--color-accent); }
+        .btn-outline-primary:hover { background-color: var(--color-accent); border-color: var(--color-accent); }
+        .progress-bar { background-color: var(--color-accent); }
+        .text-primary { color: var(--color-accent) !important; }
+        .nav-tabs .nav-link.active { color: var(--color-foreground); background: var(--color-surface); border-color: var(--color-foreground) var(--color-foreground) var(--color-surface); border-radius: var(--radius); }
+        .nav-tabs .nav-link { color: var(--color-muted); }
+        .table { --bs-table-bg: transparent; }
+        .table thead th { border-bottom-color: rgba(15, 23, 42, 0.15); color: var(--color-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: .75rem; }
+        .badge { border-radius: var(--radius); }
+        .form-control, .form-select { border-radius: var(--radius); background: var(--color-background); color: var(--color-foreground); border-color: rgba(var(--color-accent-rgb), 0.2); }
+        .form-control::placeholder { color: var(--color-muted); opacity: .7; }
+        .form-select option { background-color: var(--color-surface); color: var(--color-foreground); }
+        .form-control:focus, .form-select:focus { border-color: var(--color-accent); box-shadow: 0 0 0 .2rem rgba(var(--color-accent-rgb), .1); color: var(--color-foreground); background-color: var(--color-background); }
+        label, .form-label, .form-check-label, .form-text { color: var(--color-foreground); }
+        .form-text { color: var(--color-muted) !important; }
+        .form-check-input { background-color: var(--color-background); border-color: var(--color-muted); }
+        .form-check-input:checked { background-color: var(--color-accent); border-color: var(--color-accent); }
+        .input-group-text { background-color: var(--color-surface); color: var(--color-foreground); border-color: rgba(var(--color-accent-rgb), 0.2); }
+        .navbar { background: var(--color-surface) !important; border-bottom: var(--border); }
+        .alert { border-radius: var(--radius); }
+        /* Lisibilité en mode sombre : les classes Bootstrap à couleurs fixes suivent le thème. */
+        .text-muted { color: var(--color-muted) !important; }
+        .text-dark { color: var(--color-foreground) !important; }
+        .table-light, .table-light th, .table-light td { background-color: var(--color-surface); color: var(--color-foreground); }
+        .table thead th { border-bottom-color: var(--border); }
+        .bg-light { background-color: var(--color-surface) !important; color: var(--color-foreground); }
+        .bg-white { background-color: var(--color-surface) !important; color: var(--color-foreground); }
+        .text-secondary { color: var(--color-muted) !important; }
+        .border-secondary { border-color: var(--color-muted) !important; }
         .sidebar .nav-link.sub-link { padding-left: 1.25rem; font-size: .9rem; }
-        .sidebar .nav-link.sub-link.active { background: var(--brand); }
-        .sidebar .collapse .nav-link { border-radius: 0 .375rem .375rem 0; }
+        .sidebar .nav-link.sub-link.active { border-left-color: var(--color-accent); }
+        .sidebar .collapse .nav-link { border-radius: 0; }
+        @media (hover: hover) {
+            .card, .btn, button:not(:disabled) { transition: transform .2s ease, box-shadow .2s ease; }
+            .card:hover, .btn:hover, button:not(:disabled):hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 14px 30px rgba(0,0,0,.18); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+            .card, .btn, button { transform: none !important; }
+        }
     </style>
 </head>
 <body>
@@ -56,7 +121,7 @@
                 <nav class="col-auto sidebar">
                     <div class="brand">
                         @if ($brandLogo)<img src="{{ $brandLogo }}" alt="logo" style="height:24px" class="me-1">@else<i class="bi bi-folder2-open"></i>@endif
-                        {{ $brandLogo ? '' : 'Kaeged' }}
+                        {{ $brandLogo ? '' : app_display_name() }}
                     </div>
                     <ul class="nav flex-column">
                         <li class="nav-item"><a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><i class="bi bi-speedometer2"></i> Tableau de bord</a></li>
@@ -85,15 +150,26 @@
                         </li>
                         @endif
                     </ul>
+                    <div class="mt-auto pt-3 border-top" style="border-color: var(--border) !important;">
+                        <form method="POST" action="{{ route('profile.theme-mode') }}">
+                            @csrf
+                            <input type="hidden" name="theme_mode" value="{{ $nextMode }}">
+                            <button type="submit" class="nav-link w-100 text-start" title="Basculer clair/sombre"
+                                style="border:none;background:none;">
+                                <i class="bi {{ $themeMode === 'dark' ? 'bi-sun' : 'bi-moon-stars' }}"></i>
+                                {{ $themeMode === 'dark' ? 'Mode clair' : 'Mode sombre' }}
+                            </button>
+                        </form>
+                    </div>
                 </nav>
             @endif
         @endauth
         <div class="col">
-            <nav class="navbar navbar-light bg-white border-bottom px-3">
+            <nav class="navbar navbar-light border-bottom px-3">
                 <span class="navbar-brand mb-0 h6">
                     @auth
                         @if (auth()->user()->isSuperAdmin())
-                            <i class="bi bi-shield-lock"></i> Super Admin — Plateforme
+                            <i class="bi bi-shield-lock"></i> Super Admin — {{ app_display_name() }}
                         @else
                             {{ auth()->user()->tenant->name ?? '—' }}
                         @endif
@@ -121,5 +197,43 @@
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+@auth
+@php
+    $darkPalette = $theme['palettes']['dark'];
+    $lightPalette = $theme['palettes']['light'];
+@endphp
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const mode = {!! json_encode($themeMode) !!};
+    const light = {!! json_encode($lightPalette) !!};
+    const dark = {!! json_encode($darkPalette) !!};
+    const accent = {!! json_encode($effectiveAccent) !!};
+    const themeFont = {!! json_encode($theme['font']) !!};
+    const themeRadius = {!! json_encode($theme['radius']) !!};
+
+    function applyPalette(p) {
+        const r = document.documentElement.style;
+        r.setProperty('--color-background', p.background);
+        r.setProperty('--color-surface', p.surface);
+        r.setProperty('--color-foreground', p.foreground);
+        r.setProperty('--color-muted', p.muted);
+        r.setProperty('--color-accent', accent);
+        r.setProperty('--color-accent-hover', accent);
+        r.setProperty('--font-body', themeFont);
+        r.setProperty('--font-display', themeFont);
+        r.setProperty('--radius', themeRadius);
+    }
+
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+    function sync() {
+        if (mode === 'auto') {
+            applyPalette(systemDark.matches ? dark : light);
+        }
+    }
+    sync();
+    systemDark.addEventListener('change', sync);
+});
+</script>
+@endauth
 </body>
 </html>

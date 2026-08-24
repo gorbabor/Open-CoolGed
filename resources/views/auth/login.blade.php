@@ -6,7 +6,7 @@
 <div class="row justify-content-center mt-5">
     <div class="col-md-5">
         <div class="card p-4">
-            <h4 class="mb-3 text-center"><i class="bi bi-folder2-open"></i> {{ config('app.name') }}</h4>
+            <h4 class="mb-3 text-center"><i class="bi bi-folder2-open"></i> {{ app_display_name() }}</h4>
             <form method="POST" action="{{ route('login.post') }}">
                 @csrf
                 <div class="mb-3">

@@ -15,6 +15,7 @@
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-ai">IA</a></li>
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-workflows">Workflows</a></li>
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-branding">Branding</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-mail">Messagerie</a></li>
 </ul>
 
 @php
@@ -201,7 +202,28 @@
                 <div class="mb-2">
                     <label class="form-label small">Fournisseurs autorisés (séparés par des virgules)</label>
                     <input type="text" name="ai_providers" class="form-control" value="{{ implode(',', is_array($settings['ai_providers'] ?? ['mock']) ? $settings['ai_providers'] : ['mock']) }}">
-                    <div class="form-text">Ex. : mock, openai, anthropic (selon les adaptateurs installés).</div>
+                    <div class="form-text">Ex. : mock, openai, anthropic — seuls les fournisseurs avec une clé configurée sont réellement utilisés.</div>
+                </div>
+                <hr>
+                <h6 class="small text-muted">Clés API LLM (chiffrées — vide = héritage plateforme)</h6>
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label small">Clé API OpenAI</label>
+                        <input type="password" name="openai_api_key" class="form-control" value="" autocomplete="new-password" placeholder="{{ ! empty($settings['openai_api_key']) ? '•••••••• (laisser vide pour conserver)' : 'sk-… (sinon héritée)' }}">
+                        <label class="form-label small mt-2">Modèle OpenAI</label>
+                        <input type="text" name="openai_model" class="form-control" value="{{ $settings['openai_model'] ?? 'gpt-4o-mini' }}">
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label small">Clé API Anthropic</label>
+                        <input type="password" name="anthropic_api_key" class="form-control" value="" autocomplete="new-password" placeholder="{{ ! empty($settings['anthropic_api_key']) ? '•••••••• (laisser vide pour conserver)' : 'sk-ant-… (sinon héritée)' }}">
+                        <label class="form-label small mt-2">Modèle Anthropic</label>
+                        <input type="text" name="anthropic_model" class="form-control" value="{{ $settings['anthropic_model'] ?? 'claude-3-5-haiku' }}">
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2 mt-2">
+                    <button class="btn btn-outline-primary btn-sm" formaction="{{ route('admin.settings.test-ai') }}" name="provider" value="openai">Tester OpenAI</button>
+                    <button class="btn btn-outline-primary btn-sm" formaction="{{ route('admin.settings.test-ai') }}" name="provider" value="anthropic">Tester Anthropic</button>
+                    <span class="small text-muted">Teste la clé résolue (tenant ou plateforme) — nécessite l'enregistrement préalable des paramètres.</span>
                 </div>
             </div>
         </div>
@@ -222,15 +244,82 @@
         </div>
 
         <div class="tab-pane fade" id="tab-branding">
+            @php $registry = app(\App\Themes\ThemeRegistry::class); @endphp
             <div class="card p-3">
                 <h6>Branding <span class="badge bg-success">appliqué</span></h6>
-                <div class="form-text mb-2">La couleur et le logo sont appliqués à l'interface (sidebar, boutons, barres).
-                    Enregistrés avec le bouton « Enregistrer les paramètres » ci-dessous.</div>
+                <div class="form-text mb-2">Le nom de marque, le thème, la couleur et le logo sont appliqués à l'interface
+                    (sidebar, boutons, barres, titres, emails). Enregistrés avec le bouton « Enregistrer les paramètres » ci-dessous.
+                    Nom de marque vide = nom de la plateforme ({{ app_display_name() }}).</div>
                 <div class="row">
-                    <div class="col-md-4 mb-2"><label class="form-label small">Couleur principale</label>
-                        <input type="color" name="brand_color" class="form-control form-control-color" value="{{ $tenant->branding['color'] ?? '#0d6efd' }}"></div>
-                    <div class="col-md-8 mb-2"><label class="form-label small">Logo (URL)</label>
+                    <div class="col-md-4 mb-2"><label class="form-label small">Nom de marque</label>
+                        <input type="text" name="brand_name" class="form-control" value="{{ $tenant->branding['brand_name'] ?? '' }}" placeholder="{{ app_display_name() }}" maxlength="255"></div>
+                    <div class="col-md-4 mb-2"><label class="form-label small">Couleur personnalisée (optionnelle)</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="checkbox" name="brand_color_custom" value="1" id="brandColorCustom" class="form-check-input"
+                                @checked(! empty($tenant->branding['color']))>
+                            <input type="color" name="brand_color" id="brandColorInput" class="form-control form-control-color"
+                                value="{{ $tenant->branding['color'] ?? '#4f46e5' }}" @disabled(empty($tenant->branding['color']))>
+                        </div>
+                        <div class="form-text">Décochez pour utiliser la couleur du thème.</div>
+                    </div>
+                    <div class="col-md-4 mb-2"><label class="form-label small">Logo (URL)</label>
                         <input type="url" name="brand_logo_url" class="form-control" value="{{ $tenant->branding['logo_url'] ?? '' }}" placeholder="https://…/logo.png"></div>
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label small">Thème (palette + police)</label>
+                        <select name="theme" class="form-select">
+                            <option value="">— Thème plateforme —</option>
+                            @foreach ($registry->all() as $slug => $t)
+                                <option value="{{ $slug }}" @selected(($tenant->branding['theme'] ?? '') === $slug)>{{ $t['label'] }}</option>
+                            @endforeach
+                        </select>
+                        <div class="d-flex gap-1 mt-2">
+                            @foreach ($registry->all() as $slug => $t)
+                                <span class="d-inline-block rounded-circle" style="width:14px;height:14px;background:{{ $t['palettes']['light']['accent'] }};outline:2px solid {{ ($tenant->branding['theme'] ?? '') === $slug ? '#000' : 'transparent' }}" title="{{ $t['label'] }}"></span>
+                            @endforeach
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label small">Mode par défaut (utilisateurs sans préférence)</label>
+                        <select name="theme_mode" class="form-select">
+                            <option value="">— Auto —</option>
+                            <option value="light" @selected(($tenant->branding['theme_mode'] ?? '') === 'light')>Clair</option>
+                            <option value="dark" @selected(($tenant->branding['theme_mode'] ?? '') === 'dark')>Sombre</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="tab-mail">
+            <div class="card p-3">
+                <h6>Messagerie (SMTP) <span class="badge bg-{{ $settings['mail_enabled'] ?? false ? 'success' : 'secondary' }}">{{ ($settings['mail_enabled'] ?? false) ? 'activée' : 'désactivée' }}</span></h6>
+                <div class="form-text mb-2">Configurez un serveur SMTP pour envoyer les notifications (tâches,
+                    partages, échéances) par email. Le mot de passe est stocké chiffré. Si le SMTP du serveur
+                    est déjà configuré (hébergeur), laissez vide pour utiliser celui-ci.</div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" name="mail_enabled" value="1" id="mailEnabled" @checked($settings['mail_enabled'] ?? false)>
+                    <label class="form-check-label" for="mailEnabled">Activer l'envoi d'emails via ce SMTP</label>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-2"><label class="form-label small">Serveur SMTP (host)</label>
+                        <input type="text" name="smtp_host" class="form-control" value="{{ $settings['smtp_host'] ?? '' }}" placeholder="smtp.example.com"></div>
+                    <div class="col-md-3 mb-2"><label class="form-label small">Port</label>
+                        <input type="number" name="smtp_port" class="form-control" value="{{ $settings['smtp_port'] ?? 587 }}" placeholder="587"></div>
+                    <div class="col-md-3 mb-2"><label class="form-label small">Cryptage</label>
+                        <input type="text" class="form-control" value="{{ ($settings['smtp_port'] ?? 587) == 465 ? 'ssl' : 'tls' }}" disabled>
+                        <div class="form-text">Auto : ssl (465) / tls (587)</div></div>
+                    <div class="col-md-6 mb-2"><label class="form-label small">Utilisateur</label>
+                        <input type="text" name="smtp_username" class="form-control" value="{{ $settings['smtp_username'] ?? '' }}" autocomplete="off"></div>
+                    <div class="col-md-6 mb-2"><label class="form-label small">Mot de passe</label>
+                        <input type="password" name="smtp_password" class="form-control" value="" placeholder="{{ $settings['smtp_password'] ? '•••••••• (laisser vide pour conserver)' : '' }}" autocomplete="new-password"></div>
+                    <div class="col-md-6 mb-2"><label class="form-label small">Adresse d'expédition (from)</label>
+                        <input type="email" name="smtp_from_address" class="form-control" value="{{ $settings['smtp_from_address'] ?? '' }}" placeholder="no-reply@votre-domaine.com"></div>
+                    <div class="col-md-6 mb-2"><label class="form-label small">Nom d'expéditeur</label>
+                        <input type="text" name="smtp_from_name" class="form-control" value="{{ $settings['smtp_from_name'] ?? '' }}" placeholder="{{ app_display_name() }}"></div>
+                </div>
+                <div class="d-flex align-items-center gap-2 mt-2">
+                    <button class="btn btn-outline-primary btn-sm" formaction="{{ route('admin.settings.test-mail') }}">Tester l'envoi</button>
+                    <span class="small text-muted">Envoie un email de test à votre adresse ({{ auth()->user()->email }}).</span>
                 </div>
             </div>
         </div>

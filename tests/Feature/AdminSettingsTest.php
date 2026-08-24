@@ -237,6 +237,7 @@ class AdminSettingsTest extends TestCase
         $this->post(route('admin.settings.update'), [
             'language' => 'fr',
             'timezone' => 'Europe/Paris',
+            'brand_color_custom' => '1',
             'brand_color' => '#123456',
             'brand_logo_url' => 'https://example.com/logo.png',
             'ai_enabled' => '1',

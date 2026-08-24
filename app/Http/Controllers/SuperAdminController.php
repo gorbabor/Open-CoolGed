@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\PlatformSettings;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\AiService;
 use App\Services\AuditService;
 use App\Services\DocumentService;
 use App\Services\StorageService;
 use App\Services\SystemRoleService;
+use App\Themes\ThemeRegistry;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 
 class SuperAdminController extends Controller
@@ -119,6 +122,9 @@ class SuperAdminController extends Controller
         $settings = PlatformSettings::instance();
 
         $settings->set([
+            'app_name' => $request->input('app_name') ?: 'Open-CoolGed',
+            'theme' => $request->input('theme') ?: ThemeRegistry::DEFAULT_THEME,
+            'theme_mode' => $request->input('theme_mode') ?: 'auto',
             'mfa_required_admin' => $request->boolean('mfa_required_admin'),
             'mfa_required_validator' => $request->boolean('mfa_required_validator'),
             'session_expiration_minutes' => max(15, $request->integer('session_expiration_minutes', 120)),
@@ -131,7 +137,12 @@ class SuperAdminController extends Controller
             'external_sharing_enabled' => $request->boolean('external_sharing_enabled'),
             'external_share_max_days' => $request->integer('external_share_max_days', 30),
             'ai_enabled' => $request->boolean('ai_enabled'),
-            'ai_providers' => $request->input('ai_providers', ['mock']),
+            'ai_providers' => array_values(array_filter(array_map('trim', explode(',', (string) $request->input('ai_providers', 'mock'))))) ?: ['mock'],
+            // Clés API LLM (chiffrées) + modèles — hérités par les tenants.
+            'openai_api_key' => $request->filled('openai_api_key') ? Crypt::encryptString($request->input('openai_api_key')) : ($settings->get('openai_api_key')),
+            'openai_model' => $request->input('openai_model') ?: 'gpt-4o-mini',
+            'anthropic_api_key' => $request->filled('anthropic_api_key') ? Crypt::encryptString($request->input('anthropic_api_key')) : ($settings->get('anthropic_api_key')),
+            'anthropic_model' => $request->input('anthropic_model') ?: 'claude-3-5-haiku',
         ]);
 
         $this->audit->log('superadmin.platform_settings.updated', 'tenant', null, ['settings' => array_keys($request->all())]);
@@ -146,6 +157,27 @@ class SuperAdminController extends Controller
         $this->audit->log('superadmin.tenant.toggled', 'tenant', $tenant->id, ['status' => $tenant->status]);
 
         return back()->with('success', 'Tenant '.($tenant->isSuspended() ? 'suspendu' : 'réactivé').'.');
+    }
+
+    /** Test de connexion à un fournisseur LLM (clé plateforme — héritée par les tenants). */
+    public function testAi(Request $request)
+    {
+        $provider = $request->input('provider', 'openai');
+        if (! in_array($provider, ['openai', 'anthropic'], true)) {
+            return back()->withErrors(['ai' => 'Fournisseur inconnu.']);
+        }
+
+        try {
+            // Tenant factice sans clé propre : la résolution retombe sur la clé plateforme.
+            $dummy = new Tenant(['settings' => [], 'branding' => []]);
+            app(AiService::class)->testConnection($dummy, $provider);
+
+            $this->audit->log('superadmin.platform.ai_test', 'tenant', null, ['provider' => $provider]);
+
+            return back()->with('success', "Connexion à {$provider} réussie (clé plateforme).");
+        } catch (\Throwable $e) {
+            return back()->withErrors(['ai' => 'Échec de la connexion : '.$e->getMessage()]);
+        }
     }
 
     /** Suspendre / réactiver un super administrateur (jamais le dernier actif). */
