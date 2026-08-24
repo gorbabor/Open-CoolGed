@@ -64,12 +64,54 @@ class DocumentController extends Controller
             });
         }
 
-        $documents = $query->orderByDesc('updated_at')->paginate(config('ged.pagination'));
+        // Tri sécurisé : liste blanche de colonnes, direction validée (asc/desc).
+        $sortable = [
+            'title', 'reference', 'status', 'confidentiality',
+            'space_id', 'type_id', 'updated_at', 'created_at',
+        ];
+        $sort = in_array($request->input('sort'), $sortable, true) ? $request->input('sort') : 'updated_at';
+        $dir = strtolower($request->input('dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        // Tri par espace/type : jointure sur la table liée.
+        if ($sort === 'space_id') {
+            $query->leftJoin('spaces', 'documents.space_id', '=', 'spaces.id')
+                ->orderBy('spaces.name', $dir);
+        } elseif ($sort === 'type_id') {
+            $query->leftJoin('document_types', 'documents.document_type_id', '=', 'document_types.id')
+                ->orderBy('document_types.name', $dir);
+        } else {
+            $query->orderBy($sort, $dir);
+        }
+
+        $documents = $query->paginate(config('ged.pagination'))->withQueryString();
+
+        // Colonnes métadonnées : préférence persistée en session (fallback requête → session).
+        $definitions = MetadataDefinition::orderBy('name')->get();
+        $requestedCols = collect($request->input('cols', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0)
+            ->values()
+            ->all();
+        $selectedCols = $request->has('cols')
+            ? $requestedCols
+            : session('doc_columns', []);
+        if ($request->has('cols')) {
+            session(['doc_columns' => $selectedCols]);
+        }
+        $selectedCols = array_values(array_intersect($selectedCols, $definitions->pluck('id')->all()));
+
+        if ($selectedCols !== []) {
+            $documents->load(['metadataValues' => fn ($q) => $q->whereIn('definition_id', $selectedCols)]);
+        }
 
         return view('documents.index', [
             'documents' => $documents,
             'spaces' => Space::orderBy('name')->get(),
             'types' => DocumentType::orderBy('name')->get(),
+            'definitions' => $definitions,
+            'selectedCols' => $selectedCols,
+            'sort' => $sort,
+            'dir' => $dir,
             'filters' => $request->only(['q', 'space_id', 'folder_id', 'status', 'type_id', 'confidentiality']),
         ]);
     }
