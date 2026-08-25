@@ -100,6 +100,10 @@
         .bg-white { background-color: var(--color-surface) !important; color: var(--color-foreground); }
         .text-secondary { color: var(--color-muted) !important; }
         .border-secondary { border-color: var(--color-muted) !important; }
+        .pagination .page-link { background-color: var(--color-surface); color: var(--color-accent); border-color: var(--border); }
+        .pagination .page-link:hover { background-color: var(--color-background); color: var(--color-accent-hover); }
+        .pagination .page-item.active .page-link { background-color: var(--color-accent); border-color: var(--color-accent); color: var(--color-background); }
+        .pagination .page-item.disabled .page-link { background-color: var(--color-surface); color: var(--color-muted); border-color: var(--border); }
         .sidebar .nav-link.sub-link { padding-left: 1.25rem; font-size: .9rem; }
         .sidebar .nav-link.sub-link.active { border-left-color: var(--color-accent); }
         .sidebar .collapse .nav-link { border-radius: 0; }

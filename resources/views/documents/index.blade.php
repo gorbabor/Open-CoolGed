@@ -77,7 +77,7 @@
                 <th><a href="{{ $sortUrl('updated_at') }}" class="text-decoration-none">Mis à jour{{ $arrow('updated_at') }}</a></th>
                 @foreach ($definitions as $def)
                     @if (in_array($def->id, $selectedCols))
-                        <th>{{ $def->name }}</th>
+                        <th><a href="{{ $sortUrl('meta:'.$def->id) }}" class="text-decoration-none">{{ $def->name }}{{ $arrow('meta:'.$def->id) }}</a></th>
                     @endif
                 @endforeach
                 <th></th>

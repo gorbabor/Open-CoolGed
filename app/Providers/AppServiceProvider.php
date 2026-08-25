@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\AiService;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -21,6 +22,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Pagination stylée Bootstrap 5 (alignée avec le thème) — le view Tailwind
+        // par défaut s'affichait sans CSS Tailwind (flèches décalées vers le bas).
+        Paginator::useBootstrapFive();
     }
 }

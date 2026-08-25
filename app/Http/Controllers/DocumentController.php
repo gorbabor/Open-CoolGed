@@ -38,7 +38,7 @@ class DocumentController extends Controller
         $accessibleIds = $this->permissions->accessibleDocumentIds($user);
 
         $query = Document::with(['currentVersion', 'type', 'space', 'folder'])
-            ->whereIn('id', $accessibleIds ?: [0]);
+            ->whereIn('documents.id', $accessibleIds ?: [0]);
 
         if ($request->filled('space_id')) {
             $query->where('space_id', $request->input('space_id'));
@@ -69,23 +69,9 @@ class DocumentController extends Controller
             'title', 'reference', 'status', 'confidentiality',
             'space_id', 'type_id', 'updated_at', 'created_at',
         ];
-        $sort = in_array($request->input('sort'), $sortable, true) ? $request->input('sort') : 'updated_at';
-        $dir = strtolower($request->input('dir', 'desc')) === 'asc' ? 'asc' : 'desc';
-
-        // Tri par espace/type : jointure sur la table liée.
-        if ($sort === 'space_id') {
-            $query->leftJoin('spaces', 'documents.space_id', '=', 'spaces.id')
-                ->orderBy('spaces.name', $dir);
-        } elseif ($sort === 'type_id') {
-            $query->leftJoin('document_types', 'documents.document_type_id', '=', 'document_types.id')
-                ->orderBy('document_types.name', $dir);
-        } else {
-            $query->orderBy($sort, $dir);
-        }
-
-        $documents = $query->paginate(config('ged.pagination'))->withQueryString();
 
         // Colonnes métadonnées : préférence persistée en session (fallback requête → session).
+        // Chargées AVANT le tri pour valider sort=meta:{id} contre les colonnes sélectionnées.
         $definitions = MetadataDefinition::orderBy('name')->get();
         $requestedCols = collect($request->input('cols', []))
             ->map(fn ($id) => (int) $id)
@@ -99,6 +85,56 @@ class DocumentController extends Controller
             session(['doc_columns' => $selectedCols]);
         }
         $selectedCols = array_values(array_intersect($selectedCols, $definitions->pluck('id')->all()));
+
+        $sort = in_array($request->input('sort'), $sortable, true) ? $request->input('sort') : 'updated_at';
+        $dir = strtolower($request->input('dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        // Tri par métadonnée : sort=meta:{definition_id} — validé contre les définitions existantes
+        // (le lien de tri inclut déjà cols[] dans l'URL ; la colonne devient triable même sans sélection préalable).
+        if (str_starts_with((string) $request->input('sort'), 'meta:')) {
+            $metaId = (int) substr((string) $request->input('sort'), 5);
+            $metaDef = $definitions->firstWhere('id', $metaId);
+            if ($metaDef !== null) {
+                $sort = 'meta:'.$metaId; // la vue doit connaître le tri actif pour l'alternance ▲/▼
+
+                // La colonne triée est implicitement ajoutée à l'affichage.
+                if (! in_array($metaId, $selectedCols, true)) {
+                    $selectedCols[] = $metaId;
+                    session(['doc_columns' => $selectedCols]);
+                }
+
+                // Jointure sur la valeur de métadonnée (unique document_id + definition_id).
+                $query->select('documents.*')
+                    ->leftJoin('metadata_values as mv', function ($join) use ($metaId) {
+                        $join->on('mv.document_id', '=', 'documents.id')
+                            ->where('mv.definition_id', '=', $metaId);
+                    });
+
+                // Tri typé : numérique / date / texte. NULLS LAST portable
+                // (les documents sans valeur passent en dernier, asc ET desc).
+                $cast = match ($metaDef->type) {
+                    'number' => 'CAST(mv.value AS DECIMAL(20,4))',
+                    'date' => 'CAST(mv.value AS DATE)',
+                    default => 'mv.value',
+                };
+                $query->orderByRaw('mv.value IS NULL')
+                    ->orderByRaw("{$cast} {$dir}");
+            } else {
+                $query->orderBy($sort, $dir);
+            }
+        } elseif ($sort === 'space_id') {
+            $query->select('documents.*')
+                ->leftJoin('spaces', 'documents.space_id', '=', 'spaces.id')
+                ->orderBy('spaces.name', $dir);
+        } elseif ($sort === 'type_id') {
+            $query->select('documents.*')
+                ->leftJoin('document_types', 'documents.document_type_id', '=', 'document_types.id')
+                ->orderBy('document_types.name', $dir);
+        } else {
+            $query->orderBy($sort, $dir);
+        }
+
+        $documents = $query->paginate(config('ged.pagination'))->withQueryString();
 
         if ($selectedCols !== []) {
             $documents->load(['metadataValues' => fn ($q) => $q->whereIn('definition_id', $selectedCols)]);
