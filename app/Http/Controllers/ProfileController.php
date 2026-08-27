@@ -47,6 +47,17 @@ class ProfileController extends Controller
         return back()->with('success', 'Thème mis à jour.');
     }
 
+    /** Changement de langue : préférence persistante par utilisateur. */
+    public function updateLocale(Request $request)
+    {
+        $data = $request->validate(['locale' => ['required', 'in:fr,en']]);
+
+        auth()->user()->update(['locale' => $data['locale']]);
+        $this->audit->log('profile.locale_updated', 'user', auth()->id(), $data);
+
+        return back()->with('success', 'Langue mise à jour.');
+    }
+
     /** Changement de mot de passe : ancien requis, longueur min du tenant, confirmation. */
     public function updatePassword(Request $request)
     {

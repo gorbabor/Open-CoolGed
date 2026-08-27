@@ -21,10 +21,11 @@
         ['perm' => 'admin.roles', 'label' => 'Rôles &amp; permissions', 'icon' => 'bi-shield-check', 'route' => 'admin.roles'],
         ['perm' => 'admin.types', 'label' => 'Types &amp; métadonnées', 'icon' => 'bi-tags', 'route' => 'admin.types'],
         ['perm' => 'admin.referentials', 'label' => 'Référentiels', 'icon' => 'bi-list-check', 'route' => 'admin.referentials'],
+        ['perm' => 'admin.referentials', 'label' => 'Import CSV', 'icon' => 'bi-upload', 'route' => 'admin.import-csv'],
         ['perm' => 'admin.audit', 'label' => 'Audit', 'icon' => 'bi-journal-text', 'route' => 'admin.audit'],
         ['perm' => 'admin.settings', 'label' => 'Paramètres', 'icon' => 'bi-sliders', 'route' => 'admin.settings'],
     ];
-    $adminVisible = auth()->check() && ! auth()->user()->isSuperAdmin()
+    $adminVisible = auth()->check()
         ? array_filter($adminLinks, fn ($l) => app(\App\Services\PermissionService::class)->can(auth()->user(), $l['perm']))
         : [];
     $nextMode = $themeMode === 'dark' ? 'light' : 'dark';
@@ -121,21 +122,23 @@
 <div class="container-fluid p-0">
     <div class="row g-0">
         @auth
-            @if (!auth()->user()->isSuperAdmin())
-                <nav class="col-auto sidebar">
+            <nav class="col-auto sidebar">
                     <div class="brand">
                         @if ($brandLogo)<img src="{{ $brandLogo }}" alt="logo" style="height:24px" class="me-1">@else<i class="bi bi-folder2-open"></i>@endif
                         {{ $brandLogo ? '' : app_display_name() }}
                     </div>
                     <ul class="nav flex-column">
-                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><i class="bi bi-speedometer2"></i> Tableau de bord</a></li>
-                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('documents.*') ? 'active' : '' }}" href="{{ route('documents.index') }}"><i class="bi bi-files"></i> Documents</a></li>
-                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('v02.my-documents') ? 'active' : '' }}" href="{{ route('v02.my-documents') }}"><i class="bi bi-briefcase"></i> Mes documents</a></li>
-                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('spaces.*') ? 'active' : '' }}" href="{{ route('spaces.index') }}"><i class="bi bi-collection"></i> Espaces</a></li>
-                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('search') ? 'active' : '' }}" href="{{ route('search') }}"><i class="bi bi-search"></i> Recherche</a></li>
-                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('workflows.*') ? 'active' : '' }}" href="{{ route('workflows.index') }}"><i class="bi bi-diagram-3"></i> Workflows</a></li>
-                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('tasks.*') ? 'active' : '' }}" href="{{ route('tasks.index') }}"><i class="bi bi-check2-square"></i> Mes tâches</a></li>
-                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}" href="{{ route('notifications.index') }}"><i class="bi bi-bell"></i> Notifications</a></li>
+                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><i class="bi bi-speedometer2"></i> {{ __('Tableau de bord') }}</a></li>
+                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('documents.*') ? 'active' : '' }}" href="{{ route('documents.index') }}"><i class="bi bi-files"></i> {{ __('Documents') }}</a></li>
+                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('v02.my-documents') ? 'active' : '' }}" href="{{ route('v02.my-documents') }}"><i class="bi bi-briefcase"></i> {{ __('Mes documents') }}</a></li>
+                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('spaces.*') ? 'active' : '' }}" href="{{ route('spaces.index') }}"><i class="bi bi-collection"></i> {{ __('Espaces') }}</a></li>
+                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('search') ? 'active' : '' }}" href="{{ route('search') }}"><i class="bi bi-search"></i> {{ __('Recherche') }}</a></li>
+                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('workflows.*') ? 'active' : '' }}" href="{{ route('workflows.index') }}"><i class="bi bi-diagram-3"></i> {{ __('Workflows') }}</a></li>
+                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('tasks.*') ? 'active' : '' }}" href="{{ route('tasks.index') }}"><i class="bi bi-check2-square"></i> {{ __('Mes tâches') }}</a></li>
+                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}" href="{{ route('notifications.index') }}"><i class="bi bi-bell"></i> {{ __('Notifications') }}
+                            @php $unreadCount = auth()->user()->notifications()->whereNull('read_at')->count(); @endphp
+                            @if ($unreadCount > 0)<span class="badge bg-danger rounded-pill ms-1" id="notifBadge">{{ $unreadCount }}</span>@else<span class="badge bg-danger rounded-pill ms-1 d-none" id="notifBadge">0</span>@endif
+                        </a></li>
                         @php $adminActive = request()->routeIs('admin.*'); @endphp
                         @if (count($adminVisible) > 0)
                         <li class="nav-item">
@@ -147,7 +150,7 @@
                             <div class="collapse {{ $adminActive ? 'show' : '' }}" id="adminSubmenu">
                                 <ul class="nav flex-column ms-3 border-start border-secondary">
                                     @foreach ($adminVisible as $link)
-                                    <li class="nav-item"><a class="nav-link py-1 {{ request()->routeIs($link['route']) ? 'active' : '' }}" href="{{ route($link['route']) }}"><i class="bi {{ $link['icon'] }}"></i> {!! $link['label'] !!}</a></li>
+                                    <li class="nav-item"><a class="nav-link py-1 {{ request()->routeIs($link['route']) ? 'active' : '' }}" href="{{ route($link['route']) }}"><i class="bi {{ $link['icon'] }}"></i> {{ __($link['label']) }}</a></li>
                                     @endforeach
                                 </ul>
                             </div>
@@ -166,7 +169,6 @@
                         </form>
                     </div>
                 </nav>
-            @endif
         @endauth
         <div class="col">
             <nav class="navbar navbar-light border-bottom px-3">
@@ -181,8 +183,16 @@
                 </span>
                 <div class="d-flex align-items-center gap-3">
                     @auth
+                        <form method="POST" action="{{ route('profile.locale') }}" class="d-flex align-items-center gap-1">
+                            @csrf
+                            <label class="small text-muted mb-0">{{ __('Langue') }}</label>
+                            <select name="locale" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
+                                <option value="fr" @selected(app()->getLocale() === 'fr')>{{ __('Français') }}</option>
+                                <option value="en" @selected(app()->getLocale() === 'en')>{{ __('Anglais') }}</option>
+                            </select>
+                        </form>
                         <a href="{{ route('profile') }}" class="text-decoration-none text-dark"><i class="bi bi-person-circle"></i> {{ auth()->user()->name }}</a>
-                        <form method="POST" action="{{ route('logout') }}">@csrf<button class="btn btn-sm btn-outline-secondary">Déconnexion</button></form>
+                        <form method="POST" action="{{ route('logout') }}">@csrf<button class="btn btn-sm btn-outline-secondary">{{ __('Déconnexion') }}</button></form>
                     @endauth
                 </div>
             </nav>
@@ -237,6 +247,26 @@ document.addEventListener('DOMContentLoaded', () => {
     sync();
     systemDark.addEventListener('change', sync);
 });
+
+// Badge de notifications : rafraîchissement périodique (60 s) sans rechargement.
+const badge = document.getElementById('notifBadge');
+if (badge) {
+    const refresh = async () => {
+        try {
+            const res = await fetch(@json(route('notifications.unread-count')), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            if (!res.ok) return;
+            const data = await res.json();
+            const count = data.count ?? 0;
+            if (count > 0) {
+                badge.textContent = count;
+                badge.classList.remove('d-none');
+            } else {
+                badge.classList.add('d-none');
+            }
+        } catch (e) { /* silencieux : le badge reste tel quel */ }
+    };
+    setInterval(refresh, 60000);
+}
 </script>
 @endauth
 </body>

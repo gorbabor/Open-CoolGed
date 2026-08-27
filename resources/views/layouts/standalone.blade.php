@@ -31,7 +31,7 @@
 </head>
 <body>
 <div class="toolbar">
-    <a href="{{ route('dashboard') }}"><i class="bi bi-arrow-left"></i> Retour</a>
+    <a href="{{ route('dashboard') }}" target="_top"><i class="bi bi-arrow-left"></i> Retour</a>
     <span class="title">@yield('toolbar-title', app_display_name())</span>
     <span class="ms-auto small">@auth {{ auth()->user()->name }} @endauth</span>
 </div>

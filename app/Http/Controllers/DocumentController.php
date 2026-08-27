@@ -8,11 +8,13 @@ use App\Models\DocumentType;
 use App\Models\Folder;
 use App\Models\Group;
 use App\Models\MetadataDefinition;
+use App\Models\Referential;
 use App\Models\Share;
 use App\Models\Space;
 use App\Models\User;
 use App\Models\Workflow;
 use App\Services\AuditService;
+use App\Services\DocumentGroupService;
 use App\Services\DocumentLifecycleService;
 use App\Services\DocumentService;
 use App\Services\EditorRegistry;
@@ -37,7 +39,7 @@ class DocumentController extends Controller
         $user = auth()->user();
         $accessibleIds = $this->permissions->accessibleDocumentIds($user);
 
-        $query = Document::with(['currentVersion', 'type', 'space', 'folder'])
+        $query = Document::with(['currentVersion', 'type', 'space', 'folder', 'domain', 'process', 'referentials'])
             ->whereIn('documents.id', $accessibleIds ?: [0]);
 
         if ($request->filled('space_id')) {
@@ -74,17 +76,45 @@ class DocumentController extends Controller
         // Chargées AVANT le tri pour valider sort=meta:{id} contre les colonnes sélectionnées.
         $definitions = MetadataDefinition::orderBy('name')->get();
         $requestedCols = collect($request->input('cols', []))
-            ->map(fn ($id) => (int) $id)
-            ->filter(fn ($id) => $id > 0)
+            ->map(fn ($id) => (string) $id)
+            ->filter(fn ($id) => ctype_digit($id) || in_array($id, ['domain', 'process', 'ref:job', 'ref:department', 'ref:direction', 'ref:site', 'ref:entity', 'ref:country'], true))
             ->values()
             ->all();
         $selectedCols = $request->has('cols')
             ? $requestedCols
-            : session('doc_columns', []);
+            : (auth()->user()->doc_columns ?? []);
         if ($request->has('cols')) {
-            session(['doc_columns' => $selectedCols]);
+            auth()->user()->update(['doc_columns' => $selectedCols]);
         }
-        $selectedCols = array_values(array_intersect($selectedCols, $definitions->pluck('id')->all()));
+        $allowedExtraCols = ['domain', 'process', 'ref:job', 'ref:department', 'ref:direction', 'ref:site', 'ref:entity', 'ref:country'];
+        $selectedCols = array_values(array_filter($selectedCols, fn ($id) => in_array((int) $id, $definitions->pluck('id')->all(), true) || in_array($id, $allowedExtraCols, true)));
+
+        $view = $request->input('view') ?: auth()->user()->doc_view;
+        $view = in_array($view, ['list', 'cards'], true) ? $view : 'list';
+        if ($request->has('view')) {
+            auth()->user()->update(['doc_view' => $view]);
+        }
+
+        $groupService = app(DocumentGroupService::class);
+        $dimensions = $groupService->dimensions(false, $definitions);
+        $group = $request->input('group') ?: auth()->user()->doc_group;
+        if ($group === null || ! array_key_exists($group, $dimensions)) {
+            $group = array_key_first($dimensions);
+        }
+        if ($request->has('group')) {
+            auth()->user()->update(['doc_group' => $group]);
+        }
+        $value = $request->input('value');
+        $value = $value !== null && $value !== '' ? (string) $value : null;
+
+        $cards = null;
+        $activeLabel = null;
+        if ($view === 'cards') {
+            $cards = $groupService->groups($query, $group);
+        } elseif ($value !== null) {
+            $activeLabel = $groupService->valueLabel($group, $value);
+            $query = $groupService->applyFilter($query, $group, $value);
+        }
 
         $sort = in_array($request->input('sort'), $sortable, true) ? $request->input('sort') : 'updated_at';
         $dir = strtolower($request->input('dir', 'desc')) === 'asc' ? 'asc' : 'desc';
@@ -134,10 +164,11 @@ class DocumentController extends Controller
             $query->orderBy($sort, $dir);
         }
 
-        $documents = $query->paginate(config('ged.pagination'))->withQueryString();
+        $documents = $view === 'cards' ? null : $query->paginate(config('ged.pagination'))->withQueryString();
 
-        if ($selectedCols !== []) {
-            $documents->load(['metadataValues' => fn ($q) => $q->whereIn('definition_id', $selectedCols)]);
+        $selectedMetaIds = array_values(array_filter($selectedCols, fn ($id) => ctype_digit((string) $id)));
+        if ($documents !== null && $selectedMetaIds !== []) {
+            $documents->load(['metadataValues' => fn ($q) => $q->whereIn('definition_id', $selectedMetaIds)]);
         }
 
         return view('documents.index', [
@@ -146,9 +177,16 @@ class DocumentController extends Controller
             'types' => DocumentType::orderBy('name')->get(),
             'definitions' => $definitions,
             'selectedCols' => $selectedCols,
+            'extraColumns' => ['domain' => 'Domaine', 'process' => 'Processus', 'ref:job' => 'Poste', 'ref:department' => 'Département', 'ref:direction' => 'Direction', 'ref:site' => 'Site', 'ref:entity' => 'Entité', 'ref:country' => 'Pays'],
             'sort' => $sort,
             'dir' => $dir,
             'filters' => $request->only(['q', 'space_id', 'folder_id', 'status', 'type_id', 'confidentiality']),
+            'viewMode' => $view,
+            'dimensions' => $dimensions,
+            'group' => $group,
+            'groupValue' => $value,
+            'cards' => $cards,
+            'activeLabel' => $activeLabel,
         ]);
     }
 
@@ -159,6 +197,10 @@ class DocumentController extends Controller
             'types' => DocumentType::orderBy('name')->get(),
             'definitions' => MetadataDefinition::orderBy('name')->get(),
             'folders' => Folder::with('space')->orderBy('name')->get(),
+            'domains' => Referential::where('type', 'domain')->orderBy('name')->get(),
+            'processes' => Referential::where('type', 'process')->orderBy('name')->get(),
+            'applicationTypes' => Referential::TYPES,
+            'applicationRefs' => Referential::orderBy('type')->orderBy('name')->get()->groupBy('type'),
         ]);
     }
 
@@ -173,6 +215,9 @@ class DocumentController extends Controller
             'description' => ['nullable'],
             'confidentiality' => ['nullable', 'in:public,internal,confidential,secret'],
             'expiration_at' => ['nullable', 'date'],
+            'domain_id' => ['nullable', 'exists:referentials,id'],
+            'process_id' => ['nullable', 'exists:referentials,id'],
+            'application' => ['nullable', 'array'],
             'file' => ['required', 'file'],
             'metadata' => ['nullable', 'array'],
             'tags' => ['nullable', 'array'],
@@ -227,6 +272,10 @@ class DocumentController extends Controller
             'workflowHistory' => $document->workflowInstances()->with(['workflow', 'currentStep', 'tasks.step', 'tasks.actor', 'creator'])->orderByDesc('id')->get(),
             'activeWorkflows' => Workflow::where('is_active', true)->get(),
             'externalSharingEnabled' => TenantSettings::for($document->tenant)->externalSharingEnabled(),
+            'domains' => Referential::where('type', 'domain')->orderBy('name')->get(),
+            'processes' => Referential::where('type', 'process')->orderBy('name')->get(),
+            'applicationTypes' => Referential::TYPES,
+            'applicationRefs' => Referential::orderBy('type')->orderBy('name')->get()->groupBy('type'),
         ]);
     }
 
@@ -492,6 +541,9 @@ class DocumentController extends Controller
             'reference' => ['nullable', 'max:255'],
             'confidentiality' => ['nullable', 'in:public,internal,confidential,secret'],
             'expiration_at' => ['nullable', 'date'],
+            'domain_id' => ['nullable', 'exists:referentials,id'],
+            'process_id' => ['nullable', 'exists:referentials,id'],
+            'application' => ['nullable', 'array'],
         ]);
 
         $folderId = $request->input('folder_id') ?: null;
@@ -507,6 +559,7 @@ class DocumentController extends Controller
 
         $this->documents->saveMetadata($document, $request->input('metadata', []));
         $this->documents->syncTags($document, $request->input('tags', []));
+        $this->documents->syncApplicationReferentials($document, $request->input('application', []));
         $document->update([
             'title' => $data['title'],
             'space_id' => $data['space_id'],
@@ -515,6 +568,8 @@ class DocumentController extends Controller
             'reference' => $request->input('reference', $document->reference),
             'confidentiality' => $request->input('confidentiality', $document->confidentiality),
             'expiration_at' => $request->input('expiration_at') ?: null,
+            'domain_id' => $request->input('domain_id') ?: null,
+            'process_id' => $request->input('process_id') ?: null,
         ]);
 
         $this->audit->log('document.metadata.updated', 'document', $document->id, [

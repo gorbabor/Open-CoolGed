@@ -8,6 +8,7 @@ use App\Models\DocumentType;
 use App\Models\Group;
 use App\Models\MetadataDefinition;
 use App\Models\Permission;
+use App\Models\Referential;
 use App\Models\Role;
 use App\Models\RolePermission;
 use App\Models\Space;
@@ -79,6 +80,7 @@ class AdminController extends Controller
             'groups' => Group::orderBy('name')->get(),
             'quota' => $this->quota,
             'effectivePermissions' => $effective,
+            'dimensionRefs' => Referential::orderBy('type')->orderBy('name')->get()->groupBy('type'),
         ]);
     }
 
@@ -103,6 +105,7 @@ class AdminController extends Controller
             'email' => $data['email'],
             'password' => $data['password'] ?: Str::random(16),
             'status' => 'active',
+            ...$this->dimensionFields($request),
         ]);
 
         $user->roles()->attach($data['role_id'], ['tenant_id' => $user->tenant_id]);
@@ -127,7 +130,7 @@ class AdminController extends Controller
             'role_id' => ['nullable', 'exists:roles,id'],
         ]);
 
-        $user->update(['name' => $data['name'], 'email' => $data['email']]);
+        $user->update(['name' => $data['name'], 'email' => $data['email'], ...$this->dimensionFields($request)]);
 
         if (! empty($data['role_id'])) {
             $user->roles()->sync([$data['role_id'] => ['tenant_id' => $user->tenant_id]]);
@@ -142,6 +145,19 @@ class AdminController extends Controller
         $this->audit->log('admin.user.updated', 'user', $user->id);
 
         return back()->with('success', 'Utilisateur mis à jour.');
+    }
+
+    /** Champs dimensions V02 (poste, département, direction, site, entité, pays) — nuls si absents. */
+    private function dimensionFields(Request $request): array
+    {
+        return [
+            'job_id' => $request->input('job_id') ?: null,
+            'department_id' => $request->input('department_id') ?: null,
+            'direction_id' => $request->input('direction_id') ?: null,
+            'site_id' => $request->input('site_id') ?: null,
+            'entity_id' => $request->input('entity_id') ?: null,
+            'country_id' => $request->input('country_id') ?: null,
+        ];
     }
 
     public function resetUserPassword(Request $request, int $user)

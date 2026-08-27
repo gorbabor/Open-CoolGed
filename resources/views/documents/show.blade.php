@@ -14,10 +14,10 @@
     </div>
     <div class="d-flex gap-2">
         @if ($canDownload)
-            <a href="{{ route('documents.download', $document) }}" class="btn btn-outline-primary"><i class="bi bi-download"></i> Télécharger</a>
+            <a href="{{ route('documents.download', $document) }}" class="btn btn-outline-primary"><i class="bi bi-download"></i> {{ __('Télécharger') }}</a>
         @endif
         @if ($canEdit)
-            <a href="{{ route('office.start', $document) }}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i> Éditer</a>
+            <a href="{{ route('office.start', $document) }}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i> {{ __('Éditer') }}</a>
         @endif
         @if ($canDelete)
             <form method="POST" action="{{ route('documents.trash', $document) }}">@csrf
@@ -44,13 +44,13 @@
 @endif
 
 <ul class="nav nav-tabs" id="docTabs" role="tablist">
-    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-preview">Aperçu</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-versions">Versions</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-metadata">Métadonnées</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-workflow">Workflow</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-ai">IA</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-comments">Commentaires</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-share">Partage</a></li>
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-preview">{{ __('Aperçu') }}</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-versions">{{ __('Versions') }}</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-metadata">{{ __('Métadonnées') }}</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-workflow">{{ __('Workflow') }}</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-ai">{{ __('IA') }}</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-comments">{{ __('Commentaires') }}</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-share">{{ __('Partage') }}</a></li>
 </ul>
 
 <div class="tab-content card p-3">
@@ -127,6 +127,12 @@
                 <dt class="col-sm-3">Espace</dt><dd class="col-sm-9">{{ $document->space?->name ?? '—' }}</dd>
                 <dt class="col-sm-3">Dossier</dt><dd class="col-sm-9">{{ $document->folder?->name ?? '—' }}</dd>
                 <dt class="col-sm-3">Type documentaire</dt><dd class="col-sm-9">{{ $document->type?->name ?? '—' }}</dd>
+                <dt class="col-sm-3">Domaine</dt><dd class="col-sm-9">{{ $document->domain?->name ?? '—' }}</dd>
+                <dt class="col-sm-3">Processus</dt><dd class="col-sm-9">{{ $document->process?->name ?? '—' }}</dd>
+                @if ($document->referentials->isNotEmpty())
+                    <dt class="col-sm-3">Application</dt>
+                    <dd class="col-sm-9">{{ $document->referentials->pluck('name')->implode(', ') }}</dd>
+                @endif
                 <dt class="col-sm-3">Confidentialité</dt><dd class="col-sm-9">{{ $document->confidentiality }}</dd>
                 <dt class="col-sm-3">Expiration</dt><dd class="col-sm-9">{{ $document->expiration_at?->format('d/m/Y') ?? '—' }}</dd>
                 @if ($document->tags->isNotEmpty())
@@ -159,7 +165,31 @@
                         <option value="">— Sans type —</option>
                         @foreach ($types as $t)<option value="{{ $t->id }}" @selected($document->document_type_id === $t->id)>{{ $t->name }}</option>@endforeach
                     </select></div>
+                <div class="col-md-3 mb-2"><label class="form-label small">Domaine</label>
+                    <select name="domain_id" class="form-select form-select-sm">
+                        <option value="">— Aucun —</option>
+                        @foreach ($domains as $d)<option value="{{ $d->id }}" @selected($document->domain_id === $d->id)>{{ $d->name }}</option>@endforeach
+                    </select></div>
+                <div class="col-md-3 mb-2"><label class="form-label small">Processus</label>
+                    <select name="process_id" class="form-select form-select-sm">
+                        <option value="">— Aucun —</option>
+                        @foreach ($processes as $p)<option value="{{ $p->id }}" @selected($document->process_id === $p->id)>{{ $p->name }}</option>@endforeach
+                    </select></div>
             </div>
+            <div class="row">
+                @foreach ($applicationTypes as $type)
+                    @if (in_array($type, ['domain', 'process'], true)) @continue @endif
+                    @php $current = $document->referentials->firstWhere('type', $type); @endphp
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label small text-capitalize">{{ $type }}</label>
+                        <select name="application[{{ $type }}]" class="form-select form-select-sm">
+                            <option value="">— Aucun —</option>
+                            @foreach (($applicationRefs[$type] ?? collect()) as $r)
+                                <option value="{{ $r->id }}" @selected($current?->id === $r->id)>{{ $r->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endforeach
             <div class="row">
                 <div class="col-md-4 mb-2"><label class="form-label small">Confidentialité</label>
                     <select name="confidentiality" class="form-select form-select-sm">

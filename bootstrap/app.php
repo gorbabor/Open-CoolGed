@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureTenantActive;
+use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SetTenantContext;
 use App\Http\Middleware\SuperAdmin;
 use Illuminate\Foundation\Application;
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.context' => SetTenantContext::class,
             'tenant.active' => EnsureTenantActive::class,
             'superadmin' => SuperAdmin::class,
+            'app.locale' => SetLocale::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

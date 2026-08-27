@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Connexion')
+@section('title', __('Connexion'))
 
 @section('content')
 <div class="row justify-content-center mt-5">
@@ -10,18 +10,18 @@
             <form method="POST" action="{{ route('login.post') }}">
                 @csrf
                 <div class="mb-3">
-                    <label class="form-label">Email</label>
+                    <label class="form-label">{{ __('Email') }}</label>
                     <input type="email" name="email" class="form-control" value="{{ old('email') }}" required autofocus>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Mot de passe</label>
+                    <label class="form-label">{{ __('Mot de passe') }}</label>
                     <input type="password" name="password" class="form-control" required>
                 </div>
                 <div class="form-check mb-3">
                     <input type="checkbox" name="remember" class="form-check-input" id="remember">
-                    <label class="form-check-label" for="remember">Se souvenir de moi</label>
+                    <label class="form-check-label" for="remember">{{ __('Se souvenir de moi') }}</label>
                 </div>
-                <button class="btn btn-primary w-100">Se connecter</button>
+                <button class="btn btn-primary w-100">{{ __('Se connecter') }}</button>
             </form>
         </div>
     </div>

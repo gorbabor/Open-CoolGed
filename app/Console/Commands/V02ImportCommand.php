@@ -8,13 +8,18 @@ use App\Models\Folder;
 use App\Models\Space;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\DocumentService;
 use App\Services\V02DocumentService;
+use App\Support\TenantContext;
 use Illuminate\Console\Command;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 
 /**
  * Import initial du registre maître documentaire V02 (Lot E).
- * CSV : id;code;titre;section;lot;famille;version;statut;proprietaire;date_application;prochaine_revue
+ * CSV : id;code;titre;description;section;lot;famille;statut;proprietaire;domaine;processus;application;criticite;date_application;prochaine_revue;fichier
+ * Les colonnes « processus » et « application » (site:Siège;country:Côte d'Ivoire) sont optionnelles.
+ * La colonne « fichier » (optionnelle) attache le fichier (chemin serveur, tous formats autorisés).
  * Contrôles de cohérence (V02 §18.3) + rapport ok/erreurs/quarantaine.
  */
 class V02ImportCommand extends Command
@@ -46,7 +51,7 @@ class V02ImportCommand extends Command
         $header = array_shift($rows);
         $header = array_map(fn ($h) => trim($h), $header);
 
-        $report = ['ok' => 0, 'errors' => [], 'quarantine' => [], 'referentials_created' => 0];
+        $report = ['ok' => 0, 'errors' => [], 'quarantine' => [], 'referentials_created' => 0, 'file_errors' => []];
         $seenIds = [];
 
         foreach ($rows as $i => $row) {
@@ -78,13 +83,50 @@ class V02ImportCommand extends Command
             $report['referentials_created'] += $createdRefs;
             $report['ok']++;
             $seenIds[$data['id']] = true;
+
+            // Attachement du fichier (optionnel) : colonne « fichier » = chemin serveur,
+            // tous formats autorisés par la politique MIME du tenant.
+            if (! empty($data['fichier']) && is_file($data['fichier'])) {
+                try {
+                    // Acteur disposant de documents.edit (rôle tenant_admin du tenant) —
+                    // l'import administratif ne doit pas être bloqué par le cycle de vie.
+                    $actor = User::withoutGlobalScopes()
+                        ->where('tenant_id', $tenantId)
+                        ->whereHas('roles', fn ($q) => $q->where('roles.slug', 'tenant_admin'))
+                        ->first()
+                        ?? User::withoutGlobalScopes()->where('tenant_id', $tenantId)->first()
+                        ?? User::withoutGlobalScopes()->first();
+
+                    // Contexte tenant requis pour que les rôles/permissions soient résolus.
+                    $previous = TenantContext::get();
+                    TenantContext::set($tenantId);
+                    try {
+                        app(DocumentService::class)->addVersion(
+                            $actor,
+                            $document,
+                            new UploadedFile($data['fichier'], basename($data['fichier'])),
+                            'Version initiale (import CSV)'
+                        );
+                    } finally {
+                        TenantContext::set($previous);
+                    }
+                } catch (\Throwable $e) {
+                    $report['file_errors'][] = "Ligne $line ({$data['code']}) : fichier non attaché — ".$e->getMessage();
+                }
+            } elseif (! empty($data['fichier'])) {
+                $report['file_errors'][] = "Ligne $line ({$data['code']}) : fichier introuvable — document créé sans fichier.";
+            }
         }
 
         $this->info("Import terminé : {$report['ok']} document(s)".($dryRun ? ' (dry-run)' : ''));
         $this->line('Référentiels créés : '.$report['referentials_created']);
         $this->line('Erreurs : '.count($report['errors']));
+        $this->line('Fichiers : '.count($report['file_errors']).' avertissement(s)');
         foreach (array_slice($report['errors'], 0, 20) as $err) {
             $this->error('  - '.$err);
+        }
+        foreach (array_slice($report['file_errors'], 0, 20) as $err) {
+            $this->warn('  - '.$err);
         }
 
         if ($report['errors'] !== []) {
@@ -125,8 +167,14 @@ class V02ImportCommand extends Command
         $fallbackUser = User::withoutGlobalScopes()->where('tenant_id', $tenantId)->first();
 
         $createdRefs = 0;
-        if ($d['domaine'] ?? '') {
-            V02DocumentService::ensureReferential($tenantId, 'domain', $d['domaine']);
+        $domainId = null;
+        if (! empty($d['domaine'])) {
+            $domainId = V02DocumentService::ensureReferential($tenantId, 'domain', $d['domaine'])->id;
+            $createdRefs++;
+        }
+        $processId = null;
+        if (! empty($d['processus'])) {
+            $processId = V02DocumentService::ensureReferential($tenantId, 'process', $d['processus'])->id;
             $createdRefs++;
         }
 
@@ -139,6 +187,8 @@ class V02ImportCommand extends Command
             'reference' => $d['id'],
             'document_code' => $d['code'],
             'owner_id' => $owner?->id,
+            'domain_id' => $domainId,
+            'process_id' => $processId,
             'status' => $d['statut'] ?? 'brouillon',
             'criticality' => in_array($d['criticite'] ?? '', ['standard', 'important', 'critical']) ? $d['criticite'] : 'standard',
             'effective_date' => $d['date_application'] ?: null,
@@ -147,6 +197,38 @@ class V02ImportCommand extends Command
             'created_by' => $owner?->id ?? $fallbackUser?->id ?? 1,
         ]);
 
+        // Référentiels d'application (colonne « application » : site:Siège;country:Côte d'Ivoire).
+        $pivots = [];
+        foreach ($this->parseApplication((string) ($d['application'] ?? '')) as $type => $name) {
+            $ref = V02DocumentService::ensureReferential($tenantId, $type, $name);
+            $createdRefs++;
+            $pivots[$ref->id] = ['tenant_id' => $tenantId, 'type' => $type];
+        }
+        if ($pivots !== []) {
+            $document->referentials()->attach($pivots);
+        }
+
         return [$document, $createdRefs];
+    }
+
+    /** Parse « site:Siège;country:Côte d'Ivoire » → [type => name]. */
+    private function parseApplication(string $raw): array
+    {
+        $out = [];
+        foreach (explode(';', $raw) as $part) {
+            $part = trim($part);
+            if ($part === '') {
+                continue;
+            }
+            $seg = explode(':', $part, 2);
+            $type = strtolower(trim($seg[0]));
+            $name = trim($seg[1] ?? '');
+            if ($name === '' || ! in_array($type, ['job', 'department', 'direction', 'site', 'entity', 'country'], true)) {
+                continue;
+            }
+            $out[$type] = $name;
+        }
+
+        return $out;
     }
 }

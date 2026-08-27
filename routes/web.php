@@ -34,7 +34,7 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
-Route::middleware(['auth', 'tenant.context', 'tenant.active'])->group(function () {
+Route::middleware(['auth', 'tenant.context', 'tenant.active', 'app.locale'])->group(function () {
     Route::get('/', DashboardController::class)->name('dashboard');
 
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
@@ -42,6 +42,7 @@ Route::middleware(['auth', 'tenant.context', 'tenant.active'])->group(function (
     Route::post('/profile/mfa/disable', [ProfileController::class, 'disableMfa'])->name('profile.mfa.disable');
     Route::post('/profile/theme-mode', [ProfileController::class, 'updateThemeMode'])->name('profile.theme-mode');
     Route::post('/profile/theme', [ProfileController::class, 'updateTheme'])->name('profile.theme');
+    Route::post('/profile/locale', [ProfileController::class, 'updateLocale'])->name('profile.locale');
     Route::post('/profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
 
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
@@ -86,6 +87,7 @@ Route::middleware(['auth', 'tenant.context', 'tenant.active'])->group(function (
     Route::post('/documents/{document}/acknowledge', [V02Controller::class, 'acknowledge'])->name('v02.acknowledge');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
 
@@ -150,6 +152,11 @@ Route::middleware(['auth', 'tenant.context', 'tenant.active'])->group(function (
         Route::post('/referentials', [V02Controller::class, 'storeReferential'])->name('referentials.store');
         Route::post('/referentials/{referential}', [V02Controller::class, 'updateReferential'])->name('referentials.update');
         Route::delete('/referentials/{referential}', [V02Controller::class, 'deleteReferential'])->name('referentials.delete');
+
+        // Import CSV (registre V02) — formulaire, template et traitement.
+        Route::get('/import-csv', [V02Controller::class, 'importCsvForm'])->name('import-csv');
+        Route::get('/import-csv/template', [V02Controller::class, 'downloadTemplate'])->name('import-csv.template');
+        Route::post('/import-csv', [V02Controller::class, 'importCsv'])->name('import-csv.post');
     });
 });
 

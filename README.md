@@ -104,6 +104,15 @@ MySQL/MariaDB, Composer, SSH, cron.
 - Identité : utilisateurs, groupes, rôles RBAC, MFA TOTP (F-003/004/005/025)
 - GED : espaces, dossiers, documents, versions, métadonnées, tags, corbeille,
   archivage, rétention (F-006→010, 014)
+- Affichage : vue liste ⇄ vue cartes (Documents & Mes documents), regroupements
+  par métadonnées/référentiels/propriétés avec comptage, persistance session
+- Dimensions V02 : domaine/processus/référentiels d'application liés à la création
+  (formulaire ou import CSV), modifiables depuis la fiche, assignables aux
+  utilisateurs (poste→pays) par l'admin
+- Internationalisation FR/EN (sélecteur de langue navbar, persistant par
+  utilisateur), préférences d'affichage durables (vue liste/cartes et
+  colonnes configurables Documents/Mes documents en base), badge de
+  notifications avec rafraîchissement périodique
 - Processus : workflows paramétrables, tâches, délégation, notifications (F-011, 015)
 - Recherche : structurée + plein texte (F-012, 021)
 - Partage interne contrôlé (F-016), audit (F-013), tableaux de bord (F-024)

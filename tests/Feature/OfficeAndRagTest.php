@@ -14,6 +14,33 @@ use Tests\TestCase;
 
 class OfficeAndRagTest extends TestCase
 {
+    public function test_viewer_navigation_links_escape_the_embedding_iframe(): void
+    {
+        $tenant = $this->makeTenant();
+        $space = $this->makeSpace($tenant);
+        $user = $this->makeUser($tenant, 'user');
+        $doc = $this->makeDocument($tenant, $user, $space);
+
+        $this->actingAsUser($user);
+
+        // Le viewer est embarqué dans un iframe par la fiche document (documents.show).
+        // Ses liens de navigation doivent cibler le niveau supérieur (target="_top"),
+        // sinon la fiche entière se recharge dans le frame (menus dupliqués).
+        $response = $this->get(route('office.viewer', $doc));
+        $response->assertOk();
+        $html = $response->getContent();
+
+        $this->assertStringContainsString('target="_top"', $html);
+        $this->assertStringContainsString('Fiche document', $html);
+        $this->assertStringContainsString('> Retour</a>', $html);
+        $this->assertMatchesRegularExpression('/<a[^>]*href="[^"]*documents\/'.$doc->id.'[^"]*"[^>]*target="_top"/', $html);
+
+        // La fiche document elle-même embarque bien le viewer dans un iframe.
+        $fiche = $this->get(route('documents.show', $doc));
+        $fiche->assertOk();
+        $this->assertStringContainsString('<iframe', $fiche->getContent());
+    }
+
     public function test_office_fallback_reimport_creates_new_version(): void
     {
         $tenant = $this->makeTenant();

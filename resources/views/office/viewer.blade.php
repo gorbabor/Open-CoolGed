@@ -7,7 +7,7 @@
 <div class="container-fluid py-3">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="text-muted small">{{ $version->file_name }} · {{ $version->mime_type }}</div>
-        <a href="{{ route('documents.show', $document) }}" class="btn btn-sm btn-outline-secondary">Fiche document</a>
+        <a href="{{ route('documents.show', $document) }}" target="_top" class="btn btn-sm btn-outline-secondary">Fiche document</a>
     </div>
     <div id="viewer" class="card p-3 bg-white">
         <div class="text-center text-muted py-5" id="loading">Chargement de l'aperçu…</div>

@@ -6,6 +6,7 @@ use App\Models\Document;
 use App\Models\DocumentVersion;
 use App\Models\Folder;
 use App\Models\MetadataValue;
+use App\Models\Referential;
 use App\Models\Space;
 use App\Models\Tag;
 use App\Models\User;
@@ -110,6 +111,8 @@ class DocumentService
             'description' => $data['description'] ?? null,
             'confidentiality' => $data['confidentiality'] ?? 'internal',
             'expiration_at' => $data['expiration_at'] ?? null,
+            'domain_id' => $data['domain_id'] ?? null,
+            'process_id' => $data['process_id'] ?? null,
             'status' => 'draft',
             'created_by' => $user->id,
         ]);
@@ -119,9 +122,32 @@ class DocumentService
 
         $this->saveMetadata($document, $data['metadata'] ?? []);
         $this->syncTags($document, $data['tags'] ?? []);
+        $this->syncApplicationReferentials($document, $data['application'] ?? []);
         $this->audit->log('document.created', 'document', $document->id, ['title' => $document->title]);
 
         return $document->fresh();
+    }
+
+    /** Dimensions d'application multi-valeurs (poste, site, pays…) — pivot document_referential. */
+    public function syncApplicationReferentials(Document $document, array $application): void
+    {
+        $types = ['job', 'department', 'direction', 'site', 'entity', 'country'];
+        $pivots = [];
+
+        foreach ($types as $type) {
+            $id = $application[$type] ?? null;
+            if (empty($id)) {
+                continue;
+            }
+            $ref = Referential::where('tenant_id', $document->tenant_id)
+                ->where('type', $type)
+                ->find((int) $id);
+            if ($ref) {
+                $pivots[$ref->id] = ['tenant_id' => $document->tenant_id, 'type' => $type];
+            }
+        }
+
+        $document->referentials()->sync($pivots);
     }
 
     public function addVersion(User $user, Document $document, UploadedFile $file, string $comment, ?string $baseVersion = null): DocumentVersion

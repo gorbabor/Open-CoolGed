@@ -32,4 +32,12 @@ class NotificationController extends Controller
 
         return back()->with('success', 'Notifications marquées comme lues.');
     }
+
+    /** Compteur des notifications non lues (polling du badge navbar). */
+    public function unreadCount()
+    {
+        return response()->json([
+            'count' => auth()->user()->notifications()->whereNull('read_at')->count(),
+        ]);
+    }
 }
