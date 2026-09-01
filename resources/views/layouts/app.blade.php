@@ -129,7 +129,8 @@
                     </div>
                     <ul class="nav flex-column">
                         <li class="nav-item"><a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><i class="bi bi-speedometer2"></i> {{ __('Tableau de bord') }}</a></li>
-                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('documents.*') ? 'active' : '' }}" href="{{ route('documents.index') }}"><i class="bi bi-files"></i> {{ __('Documents') }}</a></li>
+                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('documents.*') && !request('personal') ? 'active' : '' }}" href="{{ route('documents.index') }}"><i class="bi bi-files"></i> {{ __('Documents') }}</a></li>
+                        <li class="nav-item"><a class="nav-link {{ request('personal') ? 'active' : '' }}" href="{{ route('documents.index', ['personal' => 1]) }}"><i class="bi bi-person-lock"></i> Mes documents personnels</a></li>
                         <li class="nav-item"><a class="nav-link {{ request()->routeIs('v02.my-documents') ? 'active' : '' }}" href="{{ route('v02.my-documents') }}"><i class="bi bi-briefcase"></i> {{ __('Mes documents') }}</a></li>
                         <li class="nav-item"><a class="nav-link {{ request()->routeIs('spaces.*') ? 'active' : '' }}" href="{{ route('spaces.index') }}"><i class="bi bi-collection"></i> {{ __('Espaces') }}</a></li>
                         <li class="nav-item"><a class="nav-link {{ request()->routeIs('search') ? 'active' : '' }}" href="{{ route('search') }}"><i class="bi bi-search"></i> {{ __('Recherche') }}</a></li>

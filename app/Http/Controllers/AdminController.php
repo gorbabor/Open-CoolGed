@@ -19,6 +19,7 @@ use App\Services\AuditService;
 use App\Services\DocumentService;
 use App\Services\MailSettingsService;
 use App\Services\PermissionService;
+use App\Services\PersonalSpaceService;
 use App\Services\QuotaService;
 use App\Services\StorageService;
 use App\Services\TenantSettings;
@@ -109,6 +110,7 @@ class AdminController extends Controller
         ]);
 
         $user->roles()->attach($data['role_id'], ['tenant_id' => $user->tenant_id]);
+        app(PersonalSpaceService::class)->ensure($user);
 
         if ($request->filled('group_ids')) {
             $user->groups()->attach($request->input('group_ids'), ['tenant_id' => $user->tenant_id]);
@@ -672,6 +674,7 @@ class AdminController extends Controller
             'allowed_mimes' => $request->input('allowed_mimes', DocumentService::DEFAULT_ALLOWED_MIMES),
             'auto_lock_on_edit' => $request->boolean('auto_lock_on_edit'),
             'comment_required' => $request->boolean('comment_required'),
+            'personal_spaces_admin_access' => $request->boolean('personal_spaces_admin_access'),
             // Rétention
             'default_retention_days' => $request->filled('default_retention_days') ? (int) $request->input('default_retention_days') : null,
             'trash_purge_days' => $request->integer('trash_purge_days', 30),

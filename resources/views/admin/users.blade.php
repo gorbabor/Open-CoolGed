@@ -18,7 +18,7 @@
             </select>
         </div>
         <div class="col-md-2"><input type="password" name="password" class="form-control" placeholder="Mot de passe"></div>
-        <div class="col-md-1"><button class="btn btn-primary w-100">Créer</button></div>
+        <div class="col-md-1"><button type="submit" class="btn btn-primary w-100">Créer</button></div>
         @foreach (['job' => 'Poste', 'department' => 'Département', 'direction' => 'Direction', 'site' => 'Site', 'entity' => 'Entité', 'country' => 'Pays'] as $type => $label)
             <div class="col-md-2">
                 <select name="{{ $type }}_id" class="form-select">
@@ -59,72 +59,75 @@
                 <td>
                     <div class="d-flex gap-1">
                         <form method="POST" action="{{ route('admin.users.toggle', $u) }}">@csrf
-                            <button class="btn btn-sm btn-outline-{{ $u->isSuspended() ? 'success' : 'danger' }}">
+                            <button type="button" class="btn btn-sm btn-outline-{{ $u->isSuspended() ? 'success' : 'danger' }}">
                                 {{ $u->isSuspended() ? 'Réactiver' : 'Suspendre' }}</button>
                         </form>
-                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editUser{{ $u->id }}">Modifier</button>
-                        <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#resetUser{{ $u->id }}">MDP</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editUser{{ $u->id }}">Modifier</button>
+                        <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#resetUser{{ $u->id }}">MDP</button>
                         <form method="POST" action="{{ route('admin.users.delete', $u) }}"
                               onsubmit="return confirm('Supprimer cet utilisateur (logique) ?')">@csrf @method('DELETE')
-                            <button class="btn btn-sm btn-outline-danger">Suppr.</button>
+                            <button type="button" class="btn btn-sm btn-outline-danger">Suppr.</button>
                         </form>
                     </div>
                 </td>
             </tr>
-            <div class="modal fade" id="editUser{{ $u->id }}">
-                <div class="modal-dialog">
-                    <form method="POST" action="{{ route('admin.users.update', $u) }}" class="modal-content">
-                        @csrf
-                        <div class="modal-header"><h5 class="modal-title">Modifier {{ $u->name }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                        <div class="modal-body">
-                            <div class="mb-2"><label class="form-label small">Nom</label>
-                                <input type="text" name="name" class="form-control" value="{{ $u->name }}" required></div>
-                            <div class="mb-2"><label class="form-label small">Email</label>
-                                <input type="email" name="email" class="form-control" value="{{ $u->email }}" required></div>
-                            <div class="mb-2"><label class="form-label small">Rôle</label>
-                                <select name="role_id" class="form-select">
-                                    @foreach ($roles as $r)<option value="{{ $r->id }}" @selected($u->roles->contains('id', $r->id))>{{ $r->name }}</option>@endforeach
-                                </select></div>
-                            <div class="mb-2"><label class="form-label small">Groupes</label>
-                                <select name="group_ids[]" class="form-select" multiple size="4">
-                                    @foreach ($groups as $g)<option value="{{ $g->id }}" @selected($u->groups->contains('id', $g->id))>{{ $g->name }}</option>@endforeach
-                                </select></div>
-                            <div class="mb-2"><label class="form-label small">Dimensions V02</label>
-                                <div class="row g-1">
-                                    @foreach (['job' => 'Poste', 'department' => 'Département', 'direction' => 'Direction', 'site' => 'Site', 'entity' => 'Entité', 'country' => 'Pays'] as $type => $label)
-                                        <div class="col-6">
-                                            <label class="form-label small text-muted text-capitalize">{{ $label }}</label>
-                                            <select name="{{ $type }}_id" class="form-select form-select-sm">
-                                                <option value="">— Aucun —</option>
-                                                @foreach (($dimensionRefs[$type] ?? collect()) as $r)
-                                                    <option value="{{ $r->id }}" @selected($u->{$type.'_id'} === $r->id)>{{ $r->name }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer"><button class="btn btn-primary">Enregistrer</button></div>
-                    </form>
-                </div>
-            </div>
-            <div class="modal fade" id="resetUser{{ $u->id }}">
-                <div class="modal-dialog">
-                    <form method="POST" action="{{ route('admin.users.reset-password', $u) }}" class="modal-content">
-                        @csrf
-                        <div class="modal-header"><h5 class="modal-title">Réinitialiser le mot de passe</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                        <div class="modal-body">
-                            <input type="password" name="password" class="form-control" placeholder="Nouveau mot de passe" required minlength="8">
-                        </div>
-                        <div class="modal-footer"><button class="btn btn-warning">Réinitialiser</button></div>
-                    </form>
-                </div>
-            </div>
         @endforeach
         </tbody>
     </table>
 </div>
+
+@foreach ($users as $u)
+    <div class="modal fade" id="editUser{{ $u->id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <form method="POST" action="{{ route('admin.users.update', $u) }}" class="modal-content">
+                @csrf
+                <div class="modal-header"><h5 class="modal-title">Modifier {{ $u->name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-2"><label class="form-label small">Nom</label>
+                        <input type="text" name="name" class="form-control" value="{{ $u->name }}" required></div>
+                    <div class="mb-2"><label class="form-label small">Email</label>
+                        <input type="email" name="email" class="form-control" value="{{ $u->email }}" required></div>
+                    <div class="mb-2"><label class="form-label small">Rôle</label>
+                        <select name="role_id" class="form-select">
+                            @foreach ($roles as $r)<option value="{{ $r->id }}" @selected($u->roles->contains('id', $r->id))>{{ $r->name }}</option>@endforeach
+                        </select></div>
+                    <div class="mb-2"><label class="form-label small">Groupes</label>
+                        <select name="group_ids[]" class="form-select" multiple size="4">
+                            @foreach ($groups as $g)<option value="{{ $g->id }}" @selected($u->groups->contains('id', $g->id))>{{ $g->name }}</option>@endforeach
+                        </select></div>
+                    <div class="mb-2"><label class="form-label small">Dimensions V02</label>
+                        <div class="row g-1">
+                            @foreach (['job' => 'Poste', 'department' => 'Département', 'direction' => 'Direction', 'site' => 'Site', 'entity' => 'Entité', 'country' => 'Pays'] as $type => $label)
+                                <div class="col-6">
+                                    <label class="form-label small text-muted text-capitalize">{{ $label }}</label>
+                                    <select name="{{ $type }}_id" class="form-select form-select-sm">
+                                        <option value="">— Aucun —</option>
+                                        @foreach (($dimensionRefs[$type] ?? collect()) as $r)
+                                            <option value="{{ $r->id }}" @selected($u->{$type.'_id'} === $r->id)>{{ $r->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Enregistrer</button></div>
+            </form>
+        </div>
+    </div>
+    <div class="modal fade" id="resetUser{{ $u->id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <form method="POST" action="{{ route('admin.users.reset-password', $u) }}" class="modal-content">
+                @csrf
+                <div class="modal-header"><h5 class="modal-title">Réinitialiser le mot de passe</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="password" name="password" class="form-control" placeholder="Nouveau mot de passe" required minlength="8">
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-warning">Réinitialiser</button></div>
+            </form>
+        </div>
+    </div>
+@endforeach
 @endsection

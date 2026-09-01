@@ -120,6 +120,10 @@
                 <div class="form-text mb-2">Survolez un format pour voir son type technique (MIME).</div>
                 <hr>
                 <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" name="personal_spaces_admin_access" value="1" id="personalAdminAccess" @checked($settings['personal_spaces_admin_access'] ?? true)>
+                    <label class="form-check-label" for="personalAdminAccess">Les administrateurs peuvent superviser les documents personnels</label>
+                </div>
+                <div class="form-check form-switch mb-2">
                     <input class="form-check-input" type="checkbox" name="auto_lock_on_edit" value="1" id="autoLock" @checked($settings['auto_lock_on_edit'] ?? true)>
                     <label class="form-check-label" for="autoLock">Verrouiller automatiquement le document à l'édition <span class="badge bg-success">appliqué</span></label>
                 </div>

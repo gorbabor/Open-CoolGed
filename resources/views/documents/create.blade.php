@@ -7,6 +7,16 @@
 <form method="POST" action="{{ route('documents.store') }}" enctype="multipart/form-data" class="card p-4">
     @csrf
     <div class="row">
+        <div class="col-12 mb-3">
+            <label class="form-label">Emplacement</label>
+            <div class="btn-group" role="group">
+                <input type="radio" class="btn-check" name="storage_scope" id="scopePersonal" value="personal" checked>
+                <label class="btn btn-outline-primary" for="scopePersonal">Personnel</label>
+                <input type="radio" class="btn-check" name="storage_scope" id="scopeShared" value="shared">
+                <label class="btn btn-outline-primary" for="scopeShared">Partagé</label>
+            </div>
+            <div class="form-text">Personnel : visible uniquement par vous. Partagé : visible selon les droits de l’espace.</div>
+        </div>
         <div class="col-md-6 mb-3">
             <label class="form-label">{{ __('Titre') }} *</label>
             <input type="text" name="title" class="form-control" required>

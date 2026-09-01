@@ -115,6 +115,7 @@ class DocumentService
             'process_id' => $data['process_id'] ?? null,
             'status' => 'draft',
             'created_by' => $user->id,
+            'owner_id' => $data['owner_id'] ?? null,
         ]);
 
         $version = $this->addVersion($user, $document, $file, $versionComment ?? 'Version initiale', '1.0');

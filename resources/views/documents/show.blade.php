@@ -13,6 +13,9 @@
         </div>
     </div>
     <div class="d-flex gap-2">
+        @if ($document->space?->is_personal && $document->space->personal_user_id === auth()->id())
+            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#publishPersonal">Publier dans un espace</button>
+        @endif
         @if ($canDownload)
             <a href="{{ route('documents.download', $document) }}" class="btn btn-outline-primary"><i class="bi bi-download"></i> {{ __('Télécharger') }}</a>
         @endif
@@ -401,6 +404,14 @@
         </table>
     </div>
 </div>
+
+@if ($document->space?->is_personal && $document->space->personal_user_id === auth()->id())
+<div class="modal fade" id="publishPersonal" tabindex="-1"><div class="modal-dialog"><form method="POST" action="{{ route('documents.publish', $document) }}" class="modal-content">@csrf
+    <div class="modal-header"><h5 class="modal-title">Publier dans un espace partagé</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body"><select name="space_id" class="form-select" required><option value="">Choisir un espace…</option>@foreach ($spaces as $space)<option value="{{ $space->id }}">{{ $space->name }}</option>@endforeach</select></div>
+    <div class="modal-footer"><button class="btn btn-primary">Publier</button></div>
+</form></div></div>
+@endif
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {

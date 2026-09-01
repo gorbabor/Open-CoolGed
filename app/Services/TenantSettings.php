@@ -21,6 +21,7 @@ class TenantSettings
         // Documents
         'comment_required' => false,
         'auto_lock_on_edit' => true,
+        'personal_spaces_admin_access' => true,
         // Rétention
         'default_retention_days' => null,
         'trash_purge_days' => 30,

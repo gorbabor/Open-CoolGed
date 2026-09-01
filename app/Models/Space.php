@@ -10,7 +10,14 @@ class Space extends Model
 {
     use BelongsToTenant, SoftDeletes;
 
-    protected $fillable = ['tenant_id', 'name', 'description', 'color'];
+    protected $fillable = ['tenant_id', 'name', 'description', 'color', 'is_personal', 'personal_user_id'];
+
+    protected $casts = ['is_personal' => 'boolean'];
+
+    public function personalUser()
+    {
+        return $this->belongsTo(User::class, 'personal_user_id');
+    }
 
     public function folders()
     {

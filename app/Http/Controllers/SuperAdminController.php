@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\AiService;
 use App\Services\AuditService;
 use App\Services\DocumentService;
+use App\Services\PersonalSpaceService;
 use App\Services\StorageService;
 use App\Services\SystemRoleService;
 use App\Themes\ThemeRegistry;
@@ -101,6 +102,7 @@ class SuperAdminController extends Controller
         ]);
 
         $user->roles()->attach($roles['tenant_admin']->id, ['tenant_id' => $tenant->id]);
+        app(PersonalSpaceService::class)->ensure($user);
         $this->audit->log('superadmin.tenant_admin.created', 'user', $user->id, ['tenant_id' => $tenant->id]);
 
         return $user;

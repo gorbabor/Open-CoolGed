@@ -63,6 +63,7 @@ Route::middleware(['auth', 'tenant.context', 'tenant.active', 'app.locale'])->gr
     Route::post('/documents/{document}/share', [DocumentController::class, 'share'])->name('documents.share');
     Route::post('/documents/{document}/shares/{share}/revoke', [DocumentController::class, 'revokeShare'])->name('shares.revoke');
     Route::post('/documents/{document}/metadata', [DocumentController::class, 'updateMetadata'])->name('documents.metadata');
+    Route::post('/documents/{document}/publish', [DocumentController::class, 'publishPersonal'])->name('documents.publish');
 
     Route::get('/spaces', [SpaceController::class, 'index'])->name('spaces.index');
     Route::post('/spaces', [SpaceController::class, 'store'])->name('spaces.store');

@@ -85,6 +85,17 @@ class PermissionService
             return false;
         }
 
+        // Espaces personnels : propriétaire seul, avec supervision admin configurable.
+        if ($resource instanceof Document && $resource->space?->is_personal) {
+            $space = $resource->space;
+            if ($space->personal_user_id === $user->id) {
+                return true;
+            }
+
+            return (($user->tenant->settings['personal_spaces_admin_access'] ?? true) === true)
+                && $this->can($user, 'admin.users');
+        }
+
         $roleIds = $this->effectiveRoleIds($user);
         if ($roleIds === []) {
             return false;

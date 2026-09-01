@@ -19,6 +19,7 @@ use App\Services\DocumentLifecycleService;
 use App\Services\DocumentService;
 use App\Services\EditorRegistry;
 use App\Services\PermissionService;
+use App\Services\PersonalSpaceService;
 use App\Services\TenantSettings;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -41,6 +42,13 @@ class DocumentController extends Controller
 
         $query = Document::with(['currentVersion', 'type', 'space', 'folder', 'domain', 'process', 'referentials'])
             ->whereIn('documents.id', $accessibleIds ?: [0]);
+
+        if ($request->boolean('personal')) {
+            $personal = app(PersonalSpaceService::class)->ensure($user);
+            $query->where('space_id', $personal->id);
+        } else {
+            $query->whereHas('space', fn ($q) => $q->where('is_personal', false));
+        }
 
         if ($request->filled('space_id')) {
             $query->where('space_id', $request->input('space_id'));
@@ -192,8 +200,11 @@ class DocumentController extends Controller
 
     public function create()
     {
+        $personalSpace = app(PersonalSpaceService::class)->ensure(auth()->user());
+
         return view('documents.create', [
-            'spaces' => Space::orderBy('name')->get(),
+            'spaces' => Space::where('is_personal', false)->orderBy('name')->get(),
+            'personalSpace' => $personalSpace,
             'types' => DocumentType::orderBy('name')->get(),
             'definitions' => MetadataDefinition::orderBy('name')->get(),
             'folders' => Folder::with('space')->orderBy('name')->get(),
@@ -218,10 +229,20 @@ class DocumentController extends Controller
             'domain_id' => ['nullable', 'exists:referentials,id'],
             'process_id' => ['nullable', 'exists:referentials,id'],
             'application' => ['nullable', 'array'],
+            'storage_scope' => ['nullable', 'in:personal,shared'],
             'file' => ['required', 'file'],
             'metadata' => ['nullable', 'array'],
             'tags' => ['nullable', 'array'],
         ]);
+
+        $personalSpace = app(PersonalSpaceService::class)->ensure(auth()->user());
+        if (($data['storage_scope'] ?? 'shared') === 'personal') {
+            $data['space_id'] = $personalSpace->id;
+            $data['folder_id'] = null;
+            $data['owner_id'] = auth()->id();
+        } elseif (! app(PersonalSpaceService::class)->canAccess(auth()->user(), Space::findOrFail($data['space_id']))) {
+            abort(403);
+        }
 
         try {
             $document = $this->documents->create(auth()->user(), $data, $request->file('file'));
@@ -506,6 +527,27 @@ class DocumentController extends Controller
         $this->audit->log('document.shared', 'document', $document->id, $data);
 
         return back()->with('success', 'Partage créé.');
+    }
+
+    public function publishPersonal(Request $request, int $document)
+    {
+        $document = $this->doc($document);
+        $user = auth()->user();
+        $personal = $document->space;
+        if (! $personal->is_personal || $personal->personal_user_id !== $user->id) {
+            abort(403);
+        }
+
+        $data = $request->validate(['space_id' => ['required', 'exists:spaces,id']]);
+        $target = Space::findOrFail($data['space_id']);
+        if ($target->is_personal || ! app(PersonalSpaceService::class)->canAccess($user, $target)) {
+            abort(403);
+        }
+
+        $document->update(['space_id' => $target->id, 'folder_id' => null]);
+        $this->audit->log('document.personal.published', 'document', $document->id, ['from_space' => $personal->id, 'to_space' => $target->id]);
+
+        return back()->with('success', 'Document publié dans l’espace partagé.');
     }
 
     public function revokeShare(int $document, int $share)
