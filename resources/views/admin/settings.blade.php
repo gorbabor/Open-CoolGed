@@ -335,4 +335,20 @@
         </div>
     </div>
 </form>
+
+<div class="card p-3 mt-4 border-danger">
+    <h6 class="text-danger"><i class="bi bi-exclamation-triangle"></i> Zone dangereuse — vider le contenu</h6>
+    <p class="small text-muted mb-2">
+        Purge irréversible du contenu de ce tenant : <strong>{{ $contentCounts['documents'] }} document(s)</strong>,
+        {{ $contentCounts['spaces'] }} espace(s) partagé(s), {{ $contentCounts['workflows'] }} workflow(s) — versions, fichiers,
+        métadonnées, référentiels, notifications, partages, audits et jobs IA inclus. Sont conservés : les utilisateurs,
+        rôles, paramètres et branding. <strong>Une sauvegarde est créée automatiquement avant l'opération.</strong>
+    </p>
+    <form method="POST" action="{{ route('admin.settings.reset-content') }}" class="row g-2 align-items-center"
+          onsubmit="return confirm('Confirmer la purge totale du contenu de ce tenant ? (irréversible)')">
+        @csrf
+        <div class="col-md-4"><input type="text" name="confirm" class="form-control" placeholder="Saisir le slug : {{ $tenant->slug }}" required autocomplete="off"></div>
+        <div class="col-md-3"><button type="submit" class="btn btn-outline-danger"><i class="bi bi-arrow-counterclockwise"></i> Vider le contenu</button></div>
+    </form>
+</div>
 @endsection

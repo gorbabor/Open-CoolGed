@@ -7,10 +7,12 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AiService;
 use App\Services\AuditService;
+use App\Services\BackupService;
 use App\Services\DocumentService;
 use App\Services\PersonalSpaceService;
 use App\Services\StorageService;
 use App\Services\SystemRoleService;
+use App\Services\TenantResetService;
 use App\Themes\ThemeRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
@@ -164,6 +166,29 @@ class SuperAdminController extends Controller
         $this->audit->log('superadmin.tenant.toggled', 'tenant', $tenant->id, ['status' => $tenant->status]);
 
         return back()->with('success', 'Tenant '.($tenant->isSuspended() ? 'suspendu' : 'réactivé').'.');
+    }
+
+    /** Reset du contenu métier d'un tenant (super admin) — sauvegarde préalable obligatoire. */
+    public function resetTenant(Request $request, int $tenant)
+    {
+        $tenant = $this->tenant($tenant);
+        $data = $request->validate(['confirm' => ['required', 'in:'.$tenant->slug]]);
+
+        try {
+            $backup = app(BackupService::class)->run();
+        } catch (\Throwable $e) {
+            return back()->withErrors(['confirm' => 'La sauvegarde préalable a échoué — reset annulé : '.$e->getMessage()]);
+        }
+
+        $counts = app(TenantResetService::class)->reset($tenant);
+        $this->audit->log('superadmin.tenant.reset', 'tenant', $tenant->id, [
+            'confirm' => $data['confirm'],
+            'backup' => $backup['dir'],
+            'documents' => $counts['documents'],
+            'files' => $counts['files_deleted'],
+        ]);
+
+        return back()->with('success', 'Contenu du tenant réinitialisé (sauvegarde : '.$backup['dir'].').');
     }
 
     /** Test de connexion à un fournisseur LLM (clé plateforme — héritée par les tenants). */

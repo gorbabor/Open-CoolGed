@@ -113,6 +113,9 @@ MySQL/MariaDB, Composer, SSH, cron.
   utilisateur), préférences d'affichage durables (vue liste/cartes et
   colonnes configurables Documents/Mes documents en base), badge de
   notifications avec rafraîchissement périodique
+- Reset des contenus d'un tenant : UI super admin (Tenants) et admin tenant
+  (Paramètres → zone dangereuse), sauvegarde préalable obligatoire,
+  CLI `tenant:reset --dry-run`
 - Processus : workflows paramétrables, tâches, délégation, notifications (F-011, 015)
 - Recherche : structurée + plein texte (F-012, 021)
 - Partage interne contrôlé (F-016), audit (F-013), tableaux de bord (F-024)

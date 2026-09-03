@@ -90,6 +90,7 @@
                 <td>
                     <div class="d-flex gap-1 justify-content-end">
                         <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#adminModal{{ $t->id }}"><i class="bi bi-person-plus"></i> Créer un admin</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#resetTenant{{ $t->id }}"><i class="bi bi-arrow-counterclockwise"></i> Réinitialiser</button>
                         <form method="POST" action="{{ route('superadmin.tenants.toggle', $t) }}">@csrf
                             <button class="btn btn-sm btn-outline-{{ $t->isSuspended() ? 'success' : 'danger' }}">
                                 {{ $t->isSuspended() ? 'Réactiver' : 'Suspendre' }}</button>
@@ -118,6 +119,29 @@
                         <input type="password" name="password" class="form-control" required minlength="10"></div>
                 </div>
                 <div class="modal-footer"><button class="btn btn-primary">Créer et rattacher</button></div>
+            </form>
+        </div>
+    </div>
+@endforeach
+
+@foreach ($tenants as $t)
+    <div class="modal fade" id="resetTenant{{ $t->id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <form method="POST" action="{{ route('superadmin.tenants.reset', $t) }}" class="modal-content">
+                @csrf
+                <div class="modal-header"><h5 class="modal-title">Réinitialiser — {{ $t->name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="alert alert-danger py-2 small">
+                        Purge irréversible du contenu : documents, versions, fichiers, espaces, dossiers, types,
+                        métadonnées, tags, référentiels, workflows, notifications, partages, audits, jobs IA.
+                        Sont conservés : le tenant, ses utilisateurs, rôles, paramètres et branding.
+                        <strong>Une sauvegarde est créée automatiquement avant le reset.</strong>
+                    </div>
+                    <div class="mb-2"><label class="form-label small">Saisir le slug pour confirmer : <code>{{ $t->slug }}</code></label>
+                        <input type="text" name="confirm" class="form-control" required autocomplete="off"></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-danger">Réinitialiser le contenu</button></div>
             </form>
         </div>
     </div>

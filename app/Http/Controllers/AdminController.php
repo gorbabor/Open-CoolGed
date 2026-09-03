@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\NotificationEmail;
 use App\Models\AuditLog;
+use App\Models\Document;
 use App\Models\DocumentType;
 use App\Models\Group;
 use App\Models\MetadataDefinition;
@@ -16,12 +17,14 @@ use App\Models\User;
 use App\Models\Workflow;
 use App\Services\AiService;
 use App\Services\AuditService;
+use App\Services\BackupService;
 use App\Services\DocumentService;
 use App\Services\MailSettingsService;
 use App\Services\PermissionService;
 use App\Services\PersonalSpaceService;
 use App\Services\QuotaService;
 use App\Services\StorageService;
+use App\Services\TenantResetService;
 use App\Services\TenantSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
@@ -611,7 +614,36 @@ class AdminController extends Controller
             'storageUsedMb' => $this->storage->tenantStorageMb(auth()->user()->tenant),
             'mimeChoices' => DocumentService::DEFAULT_ALLOWED_MIMES,
             'workflowChoices' => Workflow::orderBy('name')->get(['id', 'name']),
+            'contentCounts' => [
+                'documents' => Document::withoutGlobalScopes()->where('tenant_id', auth()->user()->tenant_id)->count(),
+                'spaces' => Space::withoutGlobalScopes()->where('tenant_id', auth()->user()->tenant_id)->where('is_personal', false)->count(),
+                'workflows' => Workflow::withoutGlobalScopes()->where('tenant_id', auth()->user()->tenant_id)->count(),
+            ],
         ]);
+    }
+
+    /** Vider le contenu du tenant (admin tenant) — sauvegarde préalable obligatoire. */
+    public function resetContent(Request $request)
+    {
+        $this->requireAdmin('admin.settings');
+        $tenant = auth()->user()->tenant;
+
+        $data = $request->validate(['confirm' => ['required', 'in:'.$tenant->slug]]);
+
+        try {
+            $backup = app(BackupService::class)->run();
+        } catch (\Throwable $e) {
+            return back()->withErrors(['confirm' => 'La sauvegarde préalable a échoué — reset annulé : '.$e->getMessage()]);
+        }
+
+        $counts = app(TenantResetService::class)->reset($tenant);
+        app(AuditService::class)->log('tenant.content_reset', 'tenant', $tenant->id, [
+            'backup' => $backup['dir'],
+            'documents' => $counts['documents'],
+            'files' => $counts['files_deleted'],
+        ]);
+
+        return back()->with('success', 'Contenu du tenant vidé (sauvegarde : '.$backup['dir'].').');
     }
 
     public function updateSettings(Request $request)

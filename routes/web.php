@@ -145,6 +145,7 @@ Route::middleware(['auth', 'tenant.context', 'tenant.active', 'app.locale'])->gr
 
         Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
         Route::post('/settings', [AdminController::class, 'updateSettings'])->name('settings.update');
+        Route::post('/settings/reset-content', [AdminController::class, 'resetContent'])->name('settings.reset-content');
         Route::post('/settings/branding', [AdminController::class, 'updateBranding'])->name('settings.branding');
         Route::post('/settings/test-mail', [AdminController::class, 'testMail'])->name('settings.test-mail');
         Route::post('/settings/test-ai', [AdminController::class, 'testAi'])->name('settings.test-ai');
@@ -166,6 +167,7 @@ Route::middleware(['auth', 'tenant.context', 'superadmin'])->prefix('superadmin'
     Route::post('/tenants', [SuperAdminController::class, 'storeTenant'])->name('tenants.store');
     Route::post('/tenants/{tenant}/admin', [SuperAdminController::class, 'storeTenantAdmin'])->name('tenants.admin');
     Route::post('/tenants/{tenant}/toggle', [SuperAdminController::class, 'toggleTenant'])->name('tenants.toggle');
+    Route::post('/tenants/{tenant}/reset', [SuperAdminController::class, 'resetTenant'])->name('tenants.reset');
     Route::post('/users/{user}/toggle', [SuperAdminController::class, 'toggleSuperAdmin'])->name('users.toggle');
     Route::post('/super-admins', [SuperAdminController::class, 'storeSuperAdmin'])->name('superadmins.store');
     Route::get('/settings', [SuperAdminController::class, 'platformSettings'])->name('settings');
