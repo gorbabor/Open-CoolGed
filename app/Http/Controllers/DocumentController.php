@@ -23,6 +23,7 @@ use App\Services\PersonalSpaceService;
 use App\Services\TenantSettings;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -34,6 +35,12 @@ class DocumentController extends Controller
         private PermissionService $permissions,
         private AuditService $audit,
     ) {}
+
+    /** Espaces partagés proposés dans les sélecteurs (ceux où l'utilisateur peut voir des documents). */
+    private function spaceOptions(User $user): Collection
+    {
+        return Space::whereIn('id', $this->permissions->viewableSpaceIds($user))->orderBy('name')->get();
+    }
 
     public function index(Request $request)
     {
@@ -182,7 +189,7 @@ class DocumentController extends Controller
         return view('documents.index', [
             'documents' => $documents,
             'canCreate' => $this->permissions->can($user, 'documents.create'),
-            'spaces' => Space::orderBy('name')->get(),
+            'spaces' => $this->spaceOptions($user),
             'types' => DocumentType::orderBy('name')->get(),
             'definitions' => $definitions,
             'selectedCols' => $selectedCols,
@@ -208,7 +215,7 @@ class DocumentController extends Controller
         $personalSpace = app(PersonalSpaceService::class)->ensure(auth()->user());
 
         return view('documents.create', [
-            'spaces' => Space::where('is_personal', false)->orderBy('name')->get(),
+            'spaces' => $this->spaceOptions(auth()->user()),
             'personalSpace' => $personalSpace,
             'types' => DocumentType::orderBy('name')->get(),
             'definitions' => MetadataDefinition::orderBy('name')->get(),
@@ -288,7 +295,7 @@ class DocumentController extends Controller
             'contentEditable' => app(DocumentLifecycleService::class)->contentEditable($user, $document),
             'definitions' => MetadataDefinition::orderBy('name')->get(),
             'metadata' => $document->metadataValues->pluck('value', 'definition_id'),
-            'spaces' => Space::orderBy('name')->get(),
+            'spaces' => $this->spaceOptions($user),
             'folders' => Folder::with('space')->orderBy('name')->get(),
             'types' => DocumentType::orderBy('name')->get(),
             'users' => User::where('tenant_id', $user->tenant_id)->where('id', '!=', $user->id)->get(),

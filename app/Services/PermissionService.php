@@ -164,4 +164,14 @@ class PermissionService
 
         return array_values(array_unique(array_merge($direct, $shared)));
     }
+
+    /** Espaces partagés où l'utilisateur peut voir des documents (sélecteurs d'espaces). */
+    public function viewableSpaceIds(User $user): array
+    {
+        return Space::where('is_personal', false)
+            ->get()
+            ->filter(fn (Space $space) => $this->can($user, 'documents.view', $space))
+            ->pluck('id')
+            ->all();
+    }
 }

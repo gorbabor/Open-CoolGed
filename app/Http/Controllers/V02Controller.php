@@ -145,7 +145,7 @@ class V02Controller extends Controller
 
         return view('v02.my-documents', [
             'documents' => $documents,
-            'spaces' => Space::orderBy('name')->get(),
+            'spaces' => Space::whereIn('id', $this->permissions->viewableSpaceIds($user))->orderBy('name')->get(),
             'types' => DocumentType::orderBy('name')->get(),
             'domains' => Referential::where('type', 'domain')->orderBy('name')->get(),
             'processes' => Referential::where('type', 'process')->orderBy('name')->get(),
