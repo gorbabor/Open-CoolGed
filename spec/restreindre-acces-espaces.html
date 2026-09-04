@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Restreindre l'accès à un espace — Guide administrateur — Open-CoolGed</title>
+<style>
+  body{font-family:Segoe UI,Arial,sans-serif;margin:2rem auto;max-width:1000px;color:#1f2937;background:#f8fafc;line-height:1.55}
+  h1{border-bottom:3px solid #2563eb;padding-bottom:.4rem} h2{color:#1e3a8a;margin-top:2rem;border-bottom:1px solid #dbe3ee;padding-bottom:.2rem}
+  h3{color:#1e3a8a;margin-top:1.4rem}
+  table{border-collapse:collapse;width:100%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.08);margin:1rem 0;font-size:.92rem}
+  th,td{border:1px solid #dbe3ee;padding:.5rem .7rem;text-align:left;vertical-align:top}
+  th{background:#2563eb;color:#fff}
+  tr:nth-child(even) td{background:#f1f5fb}
+  code{background:#eef2f7;padding:.1rem .4rem;border-radius:4px;font-size:.85em}
+  .step{background:#fff;border:1px solid #dbe3ee;border-left:4px solid #2563eb;border-radius:6px;padding:.7rem 1rem;margin:.6rem 0}
+  .info{background:#eff6ff;border:1px solid #2563eb;border-radius:6px;padding:.7rem 1rem;margin:.8rem 0}
+  .warn{background:#fffbeb;border:1px solid #f59e0b;border-radius:6px;padding:.7rem 1rem;margin:.8rem 0}
+  .ok{color:#15803d;font-weight:600} .ko{color:#b91c1c;font-weight:600}
+  ol li, ul li{margin:.25rem 0}
+</style>
+</head>
+<body>
+<h1>Restreindre l'accès à un espace partagé</h1>
+<p><em>Guide administrateur — Open-CoolGed (ex-Kaeged GED) — état au 04/09/2026. Complète la fiche <code>spec/profils-acces.html</code> §6 et s'appuie sur le RBAC scopé existant (refus explicites par espace, deny prioritaire — écart n°35).</em></p>
+
+<h2>1. Objectif</h2>
+<p>Dans la GED, l'écran <b>Documents</b> regroupe les espaces partagés. Par défaut, un utilisateur voit les documents des espaces partagés selon son rôle (ex. rôle <code>user</code> : vue « tenant »). Besoin fréquent : qu'une <b>série de documents d'un espace</b> ne soit visible que par <b>une partie des personnes</b>, les autres ne voyant ni la liste, ni les fiches, ni les aperçus, ni les téléchargements de cet espace — sans toucher au reste de la GED.</p>
+<p>Le moteur de permissions le permet <b>sans développement</b>, depuis l'interface d'administration, grâce à deux mécanismes existants :</p>
+<ul>
+<li><b>Portée par espace</b> : une permission peut être accordée ou refusée <i>sur un espace précis</i> plutôt que sur tout le tenant ;</li>
+<li><b>Refus explicite prioritaire</b> : un refus scopé sur l'espace l'emporte sur l'autorisation globale du rôle habituel (chaîne d'évaluation document → dossier → <b>espace</b> → tenant ; un refus ne peut être contourné, même par un partage).</li>
+</ul>
+
+<h2>2. Stratégie recommandée : « exclusion » (petit groupe à écarter)</h2>
+<p>À utiliser quand la <b>majorité</b> doit voir l'espace et qu'une minorité doit en être exclue.</p>
+
+<div class="step"><b>Étape 1 — Créer le groupe d'exclusion</b><br>
+Menu <b>Administration → Groupes → Nouveau groupe</b> : ex. « Exclus Espace RH ». (Un groupe existant peut être réutilisé, ex. un service tiers.)</div>
+
+<div class="step"><b>Étape 2 — Créer le rôle de restriction</b><br>
+Menu <b>Administration → Rôles &amp; permissions → Créer un rôle</b> : ex. « Restriction RH ». Astuce : dupliquer un rôle existant puis retirer tous les droits, ou créer un rôle vide.</div>
+
+<div class="step"><b>Étape 3 — Poser les refus scopés sur l'espace</b><br>
+Ouvrir le rôle → tableau des permissions → pour chacune des lignes ci-dessous :
+<table>
+<tr><th>Permission (slug)</th><th>Portée</th><th>Scope</th><th>Refus explicite</th></tr>
+<tr><td><code>documents.view</code> (voir)</td><td><b>Espace</b></td><td>« Espace : RH »</td><td>coché</td></tr>
+<tr><td><code>documents.preview</code> (aperçu)</td><td><b>Espace</b></td><td>« Espace : RH »</td><td>coché</td></tr>
+<tr><td><code>documents.download</code> (téléchargement)</td><td><b>Espace</b></td><td>« Espace : RH »</td><td>coché</td></tr>
+<tr><td>Optionnel : <code>documents.comment</code>, <code>documents.share</code>, <code>documents.edit</code>…</td><td><b>Espace</b></td><td>« Espace : RH »</td><td>coché</td></tr>
+</table>
+Puis <b>Enregistrer les permissions</b>.</div>
+
+<div class="step"><b>Étape 4 — Attacher le rôle au groupe</b><br>
+<b>Administration → Groupes → « Exclus Espace RH » → Rôles du groupe (hérités par les membres)</b> : cocher « Restriction RH » et enregistrer.</div>
+
+<div class="step"><b>Étape 5 — Ajouter les personnes au groupe</b><br>
+<b>Administration → Utilisateurs → Modifier → Groupes</b> : ajouter chaque personne concernée au groupe « Exclus Espace RH ». Chaque personne cumule son rôle habituel + ce rôle de groupe : <b>le refus scopé gagne</b> (RM-008).</div>
+
+<div class="info"><b>Effet attendu</b> :
+<ul>
+<li>Les personnes exclues ne voient <b>plus aucun document de l'espace RH</b> dans Documents (ni fiche — 403 —, ni aperçu, ni téléchargement) ;</li>
+<li>Leurs autres espaces restent inchangés ;</li>
+<li>Les autres utilisateurs (sans le rôle de restriction) voient tout normalement ;</li>
+<li>L'admin tenant et le super admin conservent la supervision (passe-partout).</li>
+</ul></div>
+
+<h2>3. Vérification</h2>
+<ol>
+<li>Se connecter avec un compte d'une personne exclue : l'espace RH n'apparaît plus dans <b>Documents</b> (ni dans les filtres d'espace) ;</li>
+<li>Tenter l'URL directe d'un document de l'espace → page 403 ;</li>
+<li>Se connecter avec un compte non exclu : l'espace RH et ses documents restent visibles ;</li>
+<li>Consulter <b>Administration → Utilisateurs → Permissions effectives</b> du compte exclu : la colonne liste les permissions réelles (le refus y apparaît via le rôle de groupe).</li>
+</ol>
+
+<h2>4. Stratégie alternative : « audience » (si la majorité ne doit PAS voir)</h2>
+<p>Quand seuls quelques profils doivent accéder à l'espace :</p>
+<ol>
+<li>Créer des <b>rôles métier étroits</b> (sans le rôle <code>user</code> global) et des groupes d'audience ;</li>
+<li>Poser des permissions <b>autorisées</b> (refus décoché) avec <b>Portée = Espace</b> sur les seuls espaces concernés (<code>documents.view/preview/download</code>…) ;</li>
+<li>Attribuer ces rôles aux comptes concernés (rôle direct ou via groupe).</li>
+</ol>
+<div class="warn">Ne pas donner le rôle <code>user</code> global à ces comptes : sa vue « tenant » leur redonnerait accès à tous les espaces. Cette stratégie se gère dès la création des comptes.</div>
+
+<h2>5. Cas particuliers et limites</h2>
+<ul>
+<li><b>Un document unique</b> : l'UI ne propose que la portée <b>espace</b> (ou tenant). Pour restreindre un document isolé, utiliser le <b>partage ciblé</b> (positif, onglet Partage de la fiche) ; les portées dossier/document existent dans le modèle mais ne sont pas sélectionnables dans l'interface.</li>
+<li><b>Refus vs partage</b> : un refus explicite l'emporte sur tout — même un partage reçu ne redonne pas l'accès à une personne exclue.</li>
+<li><b>Confidentialité</b> (public/interne/confidentiel/secret) : attribut de qualification et de filtre, <b>pas</b> un verrou d'accès — seul le RBAC fait foi.</li>
+<li><b>Cumul d'exclusions</b> : une permission ne porte qu'un refus par rôle et par espace ; pour exclure de plusieurs espaces (RH <i>et</i> Finances), multiplier les groupes/rôles (ex. « Restriction RH », « Restriction Finances »).</li>
+<li><b>Espaces personnels</b> : non concernés (isolation propriétaire) ; les documents personnels restent visibles de leur propriétaire (supervision admin configurable).</li>
+<li><b>Accès directs (URL)</b> : liste, fiche, aperçu, téléchargement et visionneuses sont tous gardés côté serveur — le masquage de l'UI n'est pas le seul rempart.</li>
+<li><b>Rôles système</b> : non modifiables directement ; dupliquer le rôle puis appliquer la procédure sur la copie.</li>
+</ul>
+
+<h2>6. Rappels utiles</h2>
+<table>
+<tr><th>Question</th><th>Réponse</th></tr>
+<tr><td>Qui peut créer les groupes/rôles/refus ?</td><td>L'admin tenant (permissions <code>admin.groups</code>, <code>admin.roles</code>) ; le super admin passe-partout.</td></tr>
+<tr><td>La modification est-elle auditable ?</td><td>Oui : création/édition de groupes, de rôles et d'affectations enregistrées dans le journal d'audit (écran Audit).</td></tr>
+<tr><td>Effet immédiat ?</td><td>Oui — les permissions sont évaluées à chaque requête, aucune déconnexion nécessaire.</td></tr>
+<tr><td>Et « Mes documents » (V02) ?</td><td>La vue opérationnelle ne montre que les documents approuvés applicables au périmètre de l'utilisateur : une personne exclue d'un espace n'y verra pas davantage les documents de cet espace.</td></tr>
+</table>
+
+<p><em>Guide dérivé de la fiche <code>spec/profils-acces.html</code> (types d'utilisateurs, menus, capacités) et du RBAC implémenté : <code>app/Services/PermissionService.php</code> (portées tenant/space/folder/document, deny prioritaire), écran Administration → Rôles &amp; permissions (portée + refus).</em></p>
+</body>
+</html>

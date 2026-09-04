@@ -78,7 +78,7 @@ class DocumentGroupService
                 ->selectRaw('dr.referential_id as gk, COUNT(*) as c')
                 ->groupBy('dr.referential_id')
                 ->get();
-            $none = $this->missing($query, fn (Builder $b) => $b->whereDoesntHave('referentials', fn ($q) => $q->wherePivot('type', $type)));
+            $none = $this->missing($query, fn (Builder $b) => $b->whereDoesntHave('referentials', fn ($q) => $q->where('document_referential.type', $type)));
             $names = Referential::where('type', $type)->pluck('name', 'id');
             $label = fn ($v) => $names[(int) $v] ?? (string) $v;
         } else {
@@ -140,8 +140,8 @@ class DocumentGroupService
             $type = substr($group, 4);
 
             return $none
-                ? $query->whereDoesntHave('referentials', fn ($q) => $q->wherePivot('type', $type))
-                : $query->whereHas('referentials', fn ($q) => $q->wherePivot('type', $type)->where('referential_id', (int) $value));
+                ? $query->whereDoesntHave('referentials', fn ($q) => $q->where('document_referential.type', $type))
+                : $query->whereHas('referentials', fn ($q) => $q->where('document_referential.type', $type)->where('referential_id', (int) $value));
         }
 
         $col = self::COLUMN_GROUPS[$group] ?? null;

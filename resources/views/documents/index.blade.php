@@ -45,11 +45,11 @@
         @if ($group !== null)<input type="hidden" name="group" value="{{ $group }}">@endif
         @if ($viewMode === 'list' && $groupValue !== null)<input type="hidden" name="value" value="{{ $groupValue }}">@endif
     </div>
-    @if ($definitions->isNotEmpty())
+    @if ($definitions->isNotEmpty() || count($extraColumns) > 0)
     <div class="row mt-2">
         <div class="col-md-6">
             <details class="small">
-                <summary class="form-label small mb-1" style="cursor:pointer">{{ __('Colonnes métadonnées à afficher…') }}</summary>
+                <summary class="form-label small mb-1" style="cursor:pointer">{{ __('Colonnes à afficher…') }}</summary>
                 <div class="border rounded p-2" style="max-height:160px;overflow:auto">
                     @foreach ($extraColumns as $key => $label)
                         <div class="form-check">
