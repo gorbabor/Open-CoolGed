@@ -76,7 +76,7 @@ class DocumentController extends Controller
 
         // Tri sécurisé : liste blanche de colonnes, direction validée (asc/desc).
         $sortable = [
-            'title', 'reference', 'status', 'confidentiality',
+            'title', 'reference', 'document_code', 'status', 'confidentiality',
             'space_id', 'type_id', 'updated_at', 'created_at',
         ];
 
@@ -85,7 +85,7 @@ class DocumentController extends Controller
         $definitions = MetadataDefinition::orderBy('name')->get();
         $requestedCols = collect($request->input('cols', []))
             ->map(fn ($id) => (string) $id)
-            ->filter(fn ($id) => ctype_digit($id) || in_array($id, ['domain', 'process', 'ref:job', 'ref:department', 'ref:direction', 'ref:site', 'ref:entity', 'ref:country'], true))
+            ->filter(fn ($id) => ctype_digit($id) || in_array($id, ['domain', 'process', 'ref:job', 'ref:department', 'ref:direction', 'ref:site', 'ref:entity', 'ref:country', 'reference', 'document_code'], true))
             ->values()
             ->all();
         $selectedCols = $request->has('cols')
@@ -94,7 +94,7 @@ class DocumentController extends Controller
         if ($request->has('cols')) {
             auth()->user()->update(['doc_columns' => $selectedCols]);
         }
-        $allowedExtraCols = ['domain', 'process', 'ref:job', 'ref:department', 'ref:direction', 'ref:site', 'ref:entity', 'ref:country'];
+        $allowedExtraCols = ['domain', 'process', 'ref:job', 'ref:department', 'ref:direction', 'ref:site', 'ref:entity', 'ref:country', 'reference', 'document_code'];
         $selectedCols = array_values(array_filter($selectedCols, fn ($id) => in_array((int) $id, $definitions->pluck('id')->all(), true) || in_array($id, $allowedExtraCols, true)));
 
         $view = $request->input('view') ?: auth()->user()->doc_view;
@@ -181,11 +181,12 @@ class DocumentController extends Controller
 
         return view('documents.index', [
             'documents' => $documents,
+            'canCreate' => $this->permissions->can($user, 'documents.create'),
             'spaces' => Space::orderBy('name')->get(),
             'types' => DocumentType::orderBy('name')->get(),
             'definitions' => $definitions,
             'selectedCols' => $selectedCols,
-            'extraColumns' => ['domain' => 'Domaine', 'process' => 'Processus', 'ref:job' => 'Poste', 'ref:department' => 'Département', 'ref:direction' => 'Direction', 'ref:site' => 'Site', 'ref:entity' => 'Entité', 'ref:country' => 'Pays'],
+            'extraColumns' => ['reference' => 'Référence', 'document_code' => 'Code', 'domain' => 'Domaine', 'process' => 'Processus', 'ref:job' => 'Poste', 'ref:department' => 'Département', 'ref:direction' => 'Direction', 'ref:site' => 'Site', 'ref:entity' => 'Entité', 'ref:country' => 'Pays'],
             'sort' => $sort,
             'dir' => $dir,
             'filters' => $request->only(['q', 'space_id', 'folder_id', 'status', 'type_id', 'confidentiality']),
@@ -200,6 +201,10 @@ class DocumentController extends Controller
 
     public function create()
     {
+        if (! $this->permissions->can(auth()->user(), 'documents.create')) {
+            abort(403, 'Création de documents non autorisée.');
+        }
+
         $personalSpace = app(PersonalSpaceService::class)->ensure(auth()->user());
 
         return view('documents.create', [

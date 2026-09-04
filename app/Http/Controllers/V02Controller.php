@@ -104,7 +104,7 @@ class V02Controller extends Controller
         }
 
         $v02Columns = [
-            'domain' => 'Domaine', 'process' => 'Processus', 'effective_date' => "Date d'application",
+            'reference' => 'Référence', 'domain' => 'Domaine', 'process' => 'Processus', 'effective_date' => "Date d'application",
             'next_review_date' => 'Prochaine revue', 'owner' => 'Propriétaire', 'criticality' => 'Criticité',
             'ref:job' => 'Poste', 'ref:department' => 'Département', 'ref:direction' => 'Direction',
             'ref:site' => 'Site', 'ref:entity' => 'Entité', 'ref:country' => 'Pays',
@@ -115,7 +115,7 @@ class V02Controller extends Controller
         if ($request->has('cols')) {
             auth()->user()->update(['my_doc_columns' => $selectedCols]);
         }
-        $sortable = ['domain', 'process', 'effective_date', 'next_review_date', 'owner', 'criticality'];
+        $sortable = ['reference', 'document_code', 'domain', 'process', 'effective_date', 'next_review_date', 'owner', 'criticality'];
         $sort = $request->input('sort', 'updated_at');
         $dir = strtolower($request->input('dir', 'desc')) === 'asc' ? 'asc' : 'desc';
         if ($view !== 'cards') {

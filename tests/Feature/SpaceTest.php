@@ -9,7 +9,7 @@ class SpaceTest extends TestCase
     public function test_space_can_be_renamed_and_audited(): void
     {
         $tenant = $this->makeTenant();
-        $user = $this->makeUser($tenant, 'user');
+        $user = $this->makeUser($tenant, 'tenant_admin');
         $space = $this->makeSpace($tenant);
 
         $this->actingAsUser($user);
@@ -28,7 +28,7 @@ class SpaceTest extends TestCase
     public function test_space_rename_requires_a_name(): void
     {
         $tenant = $this->makeTenant();
-        $user = $this->makeUser($tenant, 'user');
+        $user = $this->makeUser($tenant, 'tenant_admin');
         $space = $this->makeSpace($tenant);
 
         $this->actingAsUser($user);

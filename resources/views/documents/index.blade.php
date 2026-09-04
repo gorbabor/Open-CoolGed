@@ -7,7 +7,9 @@
     <h4 class="mb-0">{{ __('Documents') }}</h4>
     <div class="d-flex gap-2 align-items-center">
         @include('documents._view-toggle')
+        @if ($canCreate)
         <a href="{{ route('documents.create') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> {{ __('Importer') }}</a>
+        @endif
     </div>
 </div>
 
@@ -97,7 +99,9 @@
                 <th><a href="{{ $sortUrl('status') }}" class="text-decoration-none">{{ __('Statut') }}{{ $arrow('status') }}</a></th>
                 <th><a href="{{ $sortUrl('updated_at') }}" class="text-decoration-none">{{ __('Mis à jour') }}{{ $arrow('updated_at') }}</a></th>
                 @foreach ($extraColumns as $key => $label)
-                    @if (in_array($key, $selectedCols, true))<th>{{ __($label) }}</th>@endif
+                    @if (in_array($key, $selectedCols, true))
+                        <th>@if (in_array($key, ['reference', 'document_code'], true))<a href="{{ $sortUrl($key) }}" class="text-decoration-none">{{ __($label) }}{{ $arrow($key) }}</a>@else{{ __($label) }}@endif</th>
+                    @endif
                 @endforeach
                 @foreach ($definitions as $def)
                     @if (in_array((string) $def->id, $selectedCols, true))
@@ -113,9 +117,7 @@
                 $values = $doc->metadataValues->keyBy('definition_id');
             @endphp
             <tr>
-                <td><a href="{{ route('documents.show', $doc) }}" class="text-decoration-none fw-semibold">{{ $doc->title }}</a>
-                    @if ($doc->reference)<div class="small text-muted">{{ $doc->reference }}</div>@endif
-                </td>
+                <td><a href="{{ route('documents.show', $doc) }}" class="text-decoration-none fw-semibold">{{ $doc->title }}</a></td>
                 <td>{{ $doc->space->name ?? '—' }}</td>
                 <td>{{ $doc->type->name ?? '—' }}</td>
                 <td>@if ($doc->currentVersion)v{{ $doc->currentVersion->version }}@else<span class="badge bg-warning text-dark">sans fichier</span>@endif</td>
@@ -125,6 +127,8 @@
                     @if (in_array($key, $selectedCols, true))
                         @php
                             $value = match ($key) {
+                                'reference' => $doc->reference,
+                                'document_code' => $doc->document_code,
                                 'domain' => $doc->domain?->name,
                                 'process' => $doc->process?->name,
                                 default => $doc->referentials->firstWhere('type', substr($key, 4))?->name,

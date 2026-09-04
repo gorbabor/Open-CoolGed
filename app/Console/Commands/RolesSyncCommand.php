@@ -16,6 +16,7 @@ class RolesSyncCommand extends Command
     public function handle(): int
     {
         $service = app(SystemRoleService::class);
+        SystemRoleService::seedPermissions();
         $dryRun = $this->option('dry-run');
         $tenantsFixed = 0;
         $rolesCreated = 0;

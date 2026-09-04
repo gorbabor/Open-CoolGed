@@ -5,7 +5,9 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="mb-0">{{ __('Bonjour, :name', ['name' => auth()->user()->name]) }}</h4>
+    @if ($canCreate)
     <a href="{{ route('documents.create') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> {{ __('Nouveau document') }}</a>
+    @endif
 </div>
 
 <div class="row mb-4">

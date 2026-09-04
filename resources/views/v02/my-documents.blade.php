@@ -81,10 +81,10 @@
                 $arrow = fn ($col) => $sort === $col ? ($dir === 'asc' ? ' ▲' : ' ▼') : '';
             @endphp
             <tr>
-                <th>Code</th><th>Titre</th><th>Famille</th><th>Section</th><th>Version</th><th><a href="{{ $sortUrl('effective_date') }}" class="text-decoration-none">Application{{ $arrow('effective_date') }}</a></th><th><a href="{{ $sortUrl('next_review_date') }}" class="text-decoration-none">Prochaine revue{{ $arrow('next_review_date') }}</a></th><th><a href="{{ $sortUrl('owner') }}" class="text-decoration-none">Propriétaire{{ $arrow('owner') }}</a></th><th><a href="{{ $sortUrl('criticality') }}" class="text-decoration-none">Criticité{{ $arrow('criticality') }}</a></th>
+                <th><a href="{{ $sortUrl('document_code') }}" class="text-decoration-none">Code{{ $arrow('document_code') }}</a></th><th>Titre</th><th>Famille</th><th>Section</th><th>Version</th><th><a href="{{ $sortUrl('effective_date') }}" class="text-decoration-none">Application{{ $arrow('effective_date') }}</a></th><th><a href="{{ $sortUrl('next_review_date') }}" class="text-decoration-none">Prochaine revue{{ $arrow('next_review_date') }}</a></th><th><a href="{{ $sortUrl('owner') }}" class="text-decoration-none">Propriétaire{{ $arrow('owner') }}</a></th><th><a href="{{ $sortUrl('criticality') }}" class="text-decoration-none">Criticité{{ $arrow('criticality') }}</a></th>
                 @foreach ($v02Columns as $key => $label)
                     @if (in_array($key, $selectedCols, true))
-                        <th>@if (in_array($key, ['domain', 'process'], true))<a href="{{ $sortUrl($key) }}" class="text-decoration-none">{{ __($label) }}{{ $arrow($key) }}</a>@else{{ __($label) }}@endif</th>
+                        <th>@if (in_array($key, ['reference', 'domain', 'process'], true))<a href="{{ $sortUrl($key) }}" class="text-decoration-none">{{ __($label) }}{{ $arrow($key) }}</a>@else{{ __($label) }}@endif</th>
                     @endif
                 @endforeach
                 @foreach ($definitions as $def)
@@ -116,13 +116,14 @@
                 @foreach ($v02Columns as $key => $label)
                     @if (in_array($key, $selectedCols, true))
                         @php $columnValue = match ($key) {
+                            'reference' => $doc->reference,
                             'domain' => $doc->domain?->name,
                             'process' => $doc->process?->name,
                             'effective_date' => $doc->effective_date?->format('d/m/Y'),
                             'next_review_date' => $doc->next_review_date?->format('d/m/Y'),
                             'owner' => $doc->owner?->name,
                             'criticality' => $doc->criticality,
-                            default => $doc->referentials->firstWhere('type', substr($key, 4))?->name,
+                            default => str_starts_with($key, 'ref:') ? $doc->referentials->firstWhere('type', substr($key, 4))?->name : null,
                         }; @endphp
                         <td class="small">{{ $columnValue ?? '—' }}</td>
                     @endif

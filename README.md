@@ -116,6 +116,10 @@ MySQL/MariaDB, Composer, SSH, cron.
 - Reset des contenus d'un tenant : UI super admin (Tenants) et admin tenant
   (Paramètres → zone dangereuse), sauvegarde préalable obligatoire,
   CLI `tenant:reset --dry-run`
+- Contrôle d'accès peaufiné : permission `admin.spaces` (espaces/dossiers
+  gérés par l'admin tenant), création de document réservée à `documents.create`
+  (boutons masqués + 403), historique IA réservé à `ai.admin`,
+  `roles:sync` auto-alimente le registre des permissions
 - Processus : workflows paramétrables, tâches, délégation, notifications (F-011, 015)
 - Recherche : structurée + plein texte (F-012, 021)
 - Partage interne contrôlé (F-016), audit (F-013), tableaux de bord (F-024)

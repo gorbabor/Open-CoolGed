@@ -46,6 +46,7 @@ class DashboardController extends Controller
             'favorites' => $favorites,
             'tasks' => $tasks,
             'notifications' => $notifications,
+            'canCreate' => $permissions->can($user, 'documents.create'),
             'storageUsedMb' => $storage->tenantStorageMb($user->tenant),
             'storageQuotaMb' => $user->tenant->storage_quota_mb,
         ]);

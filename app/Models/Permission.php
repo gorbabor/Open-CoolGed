@@ -24,7 +24,7 @@ class Permission extends Model
             'ai.use', 'ai.admin',
             'admin.users', 'admin.groups', 'admin.roles', 'admin.types',
             'admin.workflows', 'admin.audit', 'admin.settings', 'admin.quotas',
-            'admin.referentials',
+            'admin.referentials', 'admin.spaces',
         ];
     }
 }

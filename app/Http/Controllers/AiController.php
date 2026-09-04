@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AiJob;
 use App\Services\AiService;
 use App\Services\AuditService;
+use App\Services\PermissionService;
 use Illuminate\Http\Request;
 
 class AiController extends Controller
@@ -84,6 +85,10 @@ class AiController extends Controller
 
     public function index(Request $request)
     {
+        if (! app(PermissionService::class)->can(auth()->user(), 'ai.admin')) {
+            abort(403, 'Accès réservé à l\'administrateur IA.');
+        }
+
         $jobs = AiJob::with(['document', 'result'])->orderByDesc('id')->paginate(30);
 
         return view('admin.ai', ['jobs' => $jobs]);

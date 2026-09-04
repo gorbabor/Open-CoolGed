@@ -10,7 +10,7 @@ use App\Models\Tenant;
 class SystemRoleService
 {
     public const ROLE_DEFS = [
-        'tenant_admin' => ['documents.view', 'documents.preview', 'documents.download', 'documents.create', 'documents.edit', 'documents.delete', 'documents.restore', 'documents.archive', 'documents.comment', 'documents.share', 'documents.metadata', 'admin.users', 'admin.groups', 'admin.roles', 'admin.types', 'admin.workflows', 'admin.audit', 'admin.settings', 'admin.quotas', 'admin.ai', 'admin.referentials', 'workflow.manage', 'workflow.validate', 'workflow.approve', 'workflow.reject', 'ai.admin', 'ai.use'],
+        'tenant_admin' => ['documents.view', 'documents.preview', 'documents.download', 'documents.create', 'documents.edit', 'documents.delete', 'documents.restore', 'documents.archive', 'documents.comment', 'documents.share', 'documents.metadata', 'admin.users', 'admin.groups', 'admin.roles', 'admin.types', 'admin.workflows', 'admin.audit', 'admin.settings', 'admin.quotas', 'admin.referentials', 'admin.spaces', 'workflow.manage', 'workflow.validate', 'workflow.approve', 'workflow.reject', 'ai.admin', 'ai.use'],
         'manager' => ['documents.view', 'documents.preview', 'documents.download', 'documents.create', 'documents.edit', 'documents.comment', 'documents.share', 'documents.metadata', 'documents.archive', 'workflow.validate', 'workflow.approve', 'workflow.reject', 'ai.use'],
         'user' => ['documents.view', 'documents.preview', 'documents.download', 'documents.create', 'documents.edit', 'documents.comment', 'documents.share'],
         'auditor' => ['documents.view', 'documents.preview', 'admin.audit'],

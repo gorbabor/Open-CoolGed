@@ -5,7 +5,9 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="mb-0">Espaces et dossiers</h4>
+    @if ($canManage)
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newSpace"><i class="bi bi-plus-lg"></i> Espace</button>
+    @endif
 </div>
 
 <div class="row">
@@ -17,11 +19,13 @@
                         <span><i class="bi bi-collection" style="color:{{ $space->color }}"></i> {{ $space->name }}</span>
                         <span class="badge bg-light text-dark">{{ $space->documents_count }} doc.</span>
                     </h6>
+                    @if ($canManage)
                     <form method="POST" action="{{ route('spaces.rename', $space) }}" class="d-flex gap-1 mb-2">
                         @csrf
                         <input type="text" name="name" class="form-control form-control-sm" value="{{ $space->name }}" required maxlength="255">
                         <button class="btn btn-sm btn-outline-secondary" title="Renommer l'espace"><i class="bi bi-pencil"></i></button>
                     </form>
+                    @endif
                     @if ($space->description)<p class="small text-muted">{{ $space->description }}</p>@endif
 
                     <ul class="list-unstyled small mb-2">
@@ -29,32 +33,39 @@
                             <li class="d-flex justify-content-between py-1 border-bottom">
                                 <span><i class="bi bi-folder"></i> {{ $folder->name }}
                                     <span class="text-muted">({{ $folder->documents_count }} doc.)</span></span>
+                                @if ($canManage)
                                 <form method="POST" action="{{ route('folders.delete', $folder) }}">@csrf @method('DELETE')
                                     <button class="btn btn-sm btn-link text-danger p-0" title="Supprimer">✕</button>
                                 </form>
+                                @endif
                             </li>
                         @endforeach
                     </ul>
 
+                    @if ($canManage)
                     <form method="POST" action="{{ route('folders.store', $space) }}" class="d-flex gap-2">
                         @csrf
                         <input type="text" name="name" class="form-control form-control-sm" placeholder="Nouveau dossier" required>
                         <button class="btn btn-sm btn-outline-primary">Ajouter</button>
                     </form>
+                    @endif
 
+                    @if ($canManage)
                     <div class="text-end mt-2">
                         <form method="POST" action="{{ route('spaces.delete', $space) }}" class="d-inline">@csrf @method('DELETE')
                             <button class="btn btn-sm btn-link text-danger" onclick="return confirm('Supprimer cet espace ?')">Supprimer l'espace</button>
                         </form>
                     </div>
+                    @endif
                 </div>
             </div>
         </div>
     @empty
-        <div class="col-12"><div class="card p-4 text-center text-muted">Aucun espace. Créez-en un pour structurer vos documents.</div></div>
+        <div class="col-12"><div class="card p-4 text-center text-muted">{{ $canManage ? 'Aucun espace. Créez-en un pour structurer vos documents.' : 'Aucun espace pour le moment.' }}</div></div>
     @endforelse
 </div>
 
+@if ($canManage)
 <div class="modal fade" id="newSpace">
     <div class="modal-dialog">
         <form method="POST" action="{{ route('spaces.store') }}" class="modal-content">
@@ -73,4 +84,5 @@
         </form>
     </div>
 </div>
+@endif
 @endsection
