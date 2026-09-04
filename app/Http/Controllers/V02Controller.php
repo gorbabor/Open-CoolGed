@@ -14,6 +14,7 @@ use App\Services\DocumentGroupService;
 use App\Services\DocumentService;
 use App\Services\PermissionService;
 use App\Services\V02DocumentService;
+use App\Services\XlsxService;
 use App\Support\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -164,6 +165,23 @@ class V02Controller extends Controller
         ]);
     }
 
+    /** Téléchargement d'un modèle Excel (.xlsx) pré-rempli — même en-tête que le CSV. */
+    public function downloadTemplateXlsx()
+    {
+        $this->requireAdminReferentials();
+
+        $header = ['id', 'code', 'titre', 'description', 'section', 'lot', 'famille', 'statut', 'proprietaire', 'domaine', 'processus', 'application', 'criticite', 'date_application', 'prochaine_revue', 'fichier'];
+        $rows = [
+            ['021', 'KAE-GOV-POL-021-V01', 'Politique de gouvernance Groupe', 'Politique de gouvernance Groupe', 'Section 01 - Gouvernance Groupe et juridique', '01 - Gouvernance Groupe et juridique', 'Politique', 'brouillon', 'Direction Générale Groupe', 'Gouvernance', 'Gouvernance documentaire', 'site:Siège;country:Côte d\'Ivoire', 'standard', '2026-01-01', '2027-01-01', '/chemin/serveur/KAE-GOV-POL-021-V01.pdf'],
+            ['022', 'KAE-GOV-MAN-022-V01', 'Manuel de gouvernance Groupe', 'Manuel de gouvernance Groupe', 'Section 01 - Gouvernance Groupe et juridique', '01 - Gouvernance Groupe et juridique', 'Manuel', 'brouillon', 'Secrétariat Général Groupe', '', '', '', 'standard', '', '', ''],
+        ];
+
+        $path = tempnam(sys_get_temp_dir(), 'ged-import').'.xlsx';
+        XlsxService::writeTemplate($path, $header, $rows);
+
+        return response()->download($path, 'template-import.xlsx', ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])->deleteFileAfterSend(true);
+    }
+
     /** Écran d'import CSV (registre V02) — formulaire + lien template. */
     public function importCsvForm()
     {
@@ -197,70 +215,105 @@ class V02Controller extends Controller
     }
 
     /**
-     * Traitement de l'import CSV : crée les documents (espace=section, dossier=lot,
-     * type=famille) et attache le fichier si la colonne « fichier » pointe vers un
-     * fichier existant sur le serveur (tous formats autorisés par la politique MIME).
+     * Traitement de l'import (CSV, TXT, XLSX, XLS) : crée les documents
+     * (espace=section, dossier=lot, type=famille) et attache le fichier si la
+     * colonne « fichier » pointe vers un fichier existant sur le serveur.
+     * Encodage : un fichier CSV non-UTF-8 (Excel ANSI) est converti depuis
+     * Windows-1252. Erreurs consignées ligne par ligne (aucun 500 global).
      */
     public function importCsv(Request $request)
     {
         $this->requireAdminReferentials();
 
-        $request->validate(['csv' => ['required', 'file', 'mimes:csv,txt', 'max:2048']]);
+        $request->validate(['csv' => ['required', 'file', 'mimes:csv,txt,xlsx,xls', 'max:5120']]);
 
-        $content = file_get_contents($request->file('csv')->getRealPath());
-        $lines = preg_split('/\r\n|\r|\n/', (string) $content);
-        $lines = array_values(array_filter($lines, fn ($l) => trim((string) $l) !== ''));
-        $rows = array_map(fn ($line) => str_getcsv($line, ';'), $lines);
-        $header = array_map(fn ($h) => trim((string) $h), array_shift($rows) ?? []);
+        $file = $request->file('csv');
+        try {
+            $parsed = $this->parseImportFile($file);
+        } catch (\RuntimeException $e) {
+            $report = ['ok' => 0, 'errors' => [$e->getMessage()], 'file_errors' => [], 'referentials_created' => 0, 'created' => []];
 
-        $report = ['ok' => 0, 'errors' => [], 'file_errors' => [], 'created' => []];
-        $seenIds = [];
+            return back()->with('import_report', $report)->withErrors(['csv' => $e->getMessage()]);
+        }
+
         $tenantId = auth()->user()->tenant_id;
         $user = auth()->user();
+
+        $report = $this->processImportRows($parsed['header'], $parsed['rows'], $tenantId, $user);
+
+        app(AuditService::class)->log('admin.import_csv', 'tenant', $tenantId, ['ok' => $report['ok'], 'errors' => count($report['errors'])]);
+
+        return back()->with('import_report', $report)->with('success', "Import terminé : {$report['ok']} document(s), ".count($report['errors']).' erreur(s).');
+    }
+
+    /** Lit un fichier CSV/TXT/XLSX et retourne [header, rows] normalisés. */
+    private function parseImportFile(UploadedFile $file): array
+    {
+        $extension = strtolower($file->getClientOriginalExtension());
+        $normalize = fn ($row) => array_map(fn ($cell) => trim((string) ($cell ?? '')), $row);
+
+        if ($extension === 'xlsx') {
+            $all = XlsxService::read($file->getRealPath());
+        } elseif ($extension === 'xls') {
+            throw new \RuntimeException('Le format .xls (ancien) n\'est pas pris en charge — enregistrez le fichier en .xlsx (Enregistrer sous) ou en CSV.');
+        } else {
+            $content = file_get_contents($file->getRealPath());
+            if (! mb_check_encoding((string) $content, 'UTF-8')) {
+                $content = mb_convert_encoding((string) $content, 'UTF-8', 'Windows-1252');
+            }
+            $lines = preg_split('/\r\n|\r|\n/', (string) $content);
+            $lines = array_values(array_filter($lines, fn ($l) => trim((string) $l) !== ''));
+            $all = array_map(fn ($line) => str_getcsv($line, ';'), $lines);
+        }
+
+        $rows = array_map($normalize, $all);
+        $header = array_shift($rows) ?? [];
+
+        return ['header' => $header, 'rows' => $rows];
+    }
+
+    /** Traite les lignes une à une : chaque erreur est consignée sans interrompre l'import. */
+    private function processImportRows(array $header, array $rows, int $tenantId, User $user): array
+    {
+        $report = ['ok' => 0, 'errors' => [], 'file_errors' => [], 'referentials_created' => 0, 'created' => []];
+        $seenIds = [];
         $documents = app(DocumentService::class);
 
         foreach ($rows as $i => $row) {
             $line = $i + 2;
 
-            if (count($row) !== count($header)) {
-                $report['errors'][] = "Ligne $line : nombre de colonnes invalide (".count($row).' au lieu de '.count($header).')';
-
-                continue;
-            }
-            $data = array_combine($header, $row);
-
             try {
+                if (count($row) !== count($header)) {
+                    throw new \RuntimeException('nombre de colonnes invalide ('.count($row).' au lieu de '.count($header).')');
+                }
+                $data = array_combine($header, $row);
+
                 $this->validateImportRow($data, $tenantId, $seenIds);
-            } catch (\RuntimeException $e) {
-                $report['errors'][] = "Ligne $line : {$e->getMessage()}";
 
-                continue;
-            }
+                [$document, $createdRefs] = $this->createImportDocument($data, $tenantId, $user);
+                $report['referentials_created'] += $createdRefs;
+                $report['ok']++;
+                $seenIds[$data['id']] = true;
+                $report['created'][] = $document->title;
 
-            [$document, $createdRefs] = $this->createImportDocument($data, $tenantId, $user);
-            $report['referentials_created'] = ($report['referentials_created'] ?? 0) + $createdRefs;
-            $report['ok']++;
-            $seenIds[$data['id']] = true;
-            $report['created'][] = $document->title;
-
-            // Attachement du fichier (optionnel) : chemin serveur, tous formats autorisés.
-            if (! empty($data['fichier'])) {
-                $path = trim($data['fichier']);
-                if (! is_file($path)) {
-                    $report['file_errors'][] = "Ligne $line ({$data['code']}) : fichier introuvable — document créé sans fichier.";
-                } else {
-                    try {
-                        $documents->addVersion($user, $document, new UploadedFile($path, basename($path)), 'Version initiale (import CSV)');
-                    } catch (\Throwable $e) {
-                        $report['file_errors'][] = "Ligne $line ({$data['code']}) : fichier non attaché — ".$e->getMessage();
+                if (! empty($data['fichier'])) {
+                    $path = trim($data['fichier']);
+                    if (! is_file($path)) {
+                        $report['file_errors'][] = "Ligne $line ({$data['code']}) : fichier introuvable — document créé sans fichier.";
+                    } else {
+                        try {
+                            $documents->addVersion($user, $document, new UploadedFile($path, basename($path)), 'Version initiale (import)');
+                        } catch (\Throwable $e) {
+                            $report['file_errors'][] = "Ligne $line ({$data['code']}) : fichier non attaché — ".$e->getMessage();
+                        }
                     }
                 }
+            } catch (\Throwable $e) {
+                $report['errors'][] = "Ligne $line : {$e->getMessage()}";
             }
         }
 
-        app(AuditService::class)->log('admin.import_csv', 'tenant', $tenantId, ['ok' => $report['ok'], 'errors' => count($report['errors'])]);
-
-        return back()->with('import_report', $report)->with('success', "Import terminé : {$report['ok']} document(s), ".count($report['errors']).' erreur(s).');
+        return $report;
     }
 
     private function validateImportRow(array $d, int $tenantId, array &$seenIds): void

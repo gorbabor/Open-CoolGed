@@ -230,7 +230,7 @@ class DocumentController extends Controller
             'process_id' => ['nullable', 'exists:referentials,id'],
             'application' => ['nullable', 'array'],
             'storage_scope' => ['nullable', 'in:personal,shared'],
-            'file' => ['required', 'file'],
+            'file' => ['nullable', 'file'],
             'metadata' => ['nullable', 'array'],
             'tags' => ['nullable', 'array'],
         ]);

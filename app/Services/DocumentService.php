@@ -86,10 +86,12 @@ class DocumentService
     public function create(
         User $user,
         array $data,
-        UploadedFile $file,
+        ?UploadedFile $file = null,
         ?string $versionComment = null,
     ): Document {
-        $this->validateUpload($user, $file);
+        if ($file !== null) {
+            $this->validateUpload($user, $file);
+        }
 
         $tenant = $user->tenant;
         $space = Space::where('tenant_id', $tenant->id)->findOrFail($data['space_id']);
@@ -118,8 +120,10 @@ class DocumentService
             'owner_id' => $data['owner_id'] ?? null,
         ]);
 
-        $version = $this->addVersion($user, $document, $file, $versionComment ?? 'Version initiale', '1.0');
-        $document->update(['current_version_id' => $version->id]);
+        if ($file !== null) {
+            $version = $this->addVersion($user, $document, $file, $versionComment ?? 'Version initiale', '1.0');
+            $document->update(['current_version_id' => $version->id]);
+        }
 
         $this->saveMetadata($document, $data['metadata'] ?? []);
         $this->syncTags($document, $data['tags'] ?? []);

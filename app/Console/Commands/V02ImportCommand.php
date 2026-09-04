@@ -10,6 +10,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\DocumentService;
 use App\Services\V02DocumentService;
+use App\Services\XlsxService;
 use App\Support\TenantContext;
 use Illuminate\Console\Command;
 use Illuminate\Http\UploadedFile;
@@ -46,10 +47,25 @@ class V02ImportCommand extends Command
         }
 
         $dryRun = $this->option('dry-run');
-        $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        $rows = array_map(fn ($line) => str_getcsv($line, ';'), $lines);
-        $header = array_shift($rows);
-        $header = array_map(fn ($h) => trim($h), $header);
+        $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+
+        if ($extension === 'xlsx') {
+            $all = XlsxService::read($file);
+        } elseif ($extension === 'xls') {
+            $this->error('Le format .xls (ancien) n\'est pas pris en charge — enregistrez le fichier en .xlsx ou en CSV.');
+
+            return self::FAILURE;
+        } else {
+            $content = file_get_contents($file);
+            if (! mb_check_encoding((string) $content, 'UTF-8')) {
+                $content = mb_convert_encoding((string) $content, 'UTF-8', 'Windows-1252');
+            }
+            $lines = preg_split('/\r\n|\r|\n/', (string) $content);
+            $lines = array_values(array_filter($lines, fn ($l) => trim((string) $l) !== ''));
+            $rows = array_map(fn ($line) => str_getcsv($line, ';'), $lines);
+        }
+
+        $header = array_map(fn ($h) => trim((string) ($h ?? '')), array_shift($rows) ?? []);
 
         $report = ['ok' => 0, 'errors' => [], 'quarantine' => [], 'referentials_created' => 0, 'file_errors' => []];
         $seenIds = [];
@@ -57,64 +73,60 @@ class V02ImportCommand extends Command
         foreach ($rows as $i => $row) {
             $line = $i + 2;
 
-            // Sécurité : si le nombre de colonnes diffère de l'en-tête, on complète/tronque.
-            if (count($row) !== count($header)) {
-                $report['errors'][] = "Ligne $line : nombre de colonnes invalide (".count($row).' au lieu de '.count($header).')';
-
-                continue;
-            }
-            $data = array_combine($header, $row);
-
             try {
-                $this->validateRow($data, $tenantId, $seenIds);
-            } catch (\RuntimeException $e) {
-                $report['errors'][] = "Ligne $line : {$e->getMessage()}";
-
-                continue;
-            }
-
-            if ($dryRun) {
-                $report['ok']++;
-
-                continue;
-            }
-
-            [$document, $createdRefs] = $this->createDocument($data, $tenantId, $report);
-            $report['referentials_created'] += $createdRefs;
-            $report['ok']++;
-            $seenIds[$data['id']] = true;
-
-            // Attachement du fichier (optionnel) : colonne « fichier » = chemin serveur,
-            // tous formats autorisés par la politique MIME du tenant.
-            if (! empty($data['fichier']) && is_file($data['fichier'])) {
-                try {
-                    // Acteur disposant de documents.edit (rôle tenant_admin du tenant) —
-                    // l'import administratif ne doit pas être bloqué par le cycle de vie.
-                    $actor = User::withoutGlobalScopes()
-                        ->where('tenant_id', $tenantId)
-                        ->whereHas('roles', fn ($q) => $q->where('roles.slug', 'tenant_admin'))
-                        ->first()
-                        ?? User::withoutGlobalScopes()->where('tenant_id', $tenantId)->first()
-                        ?? User::withoutGlobalScopes()->first();
-
-                    // Contexte tenant requis pour que les rôles/permissions soient résolus.
-                    $previous = TenantContext::get();
-                    TenantContext::set($tenantId);
-                    try {
-                        app(DocumentService::class)->addVersion(
-                            $actor,
-                            $document,
-                            new UploadedFile($data['fichier'], basename($data['fichier'])),
-                            'Version initiale (import CSV)'
-                        );
-                    } finally {
-                        TenantContext::set($previous);
-                    }
-                } catch (\Throwable $e) {
-                    $report['file_errors'][] = "Ligne $line ({$data['code']}) : fichier non attaché — ".$e->getMessage();
+                // Sécurité : si le nombre de colonnes diffère de l'en-tête, on complète/tronque.
+                if (count($row) !== count($header)) {
+                    throw new \RuntimeException('nombre de colonnes invalide ('.count($row).' au lieu de '.count($header).')');
                 }
-            } elseif (! empty($data['fichier'])) {
-                $report['file_errors'][] = "Ligne $line ({$data['code']}) : fichier introuvable — document créé sans fichier.";
+                $data = array_combine($header, $row);
+
+                $this->validateRow($data, $tenantId, $seenIds);
+
+                if ($dryRun) {
+                    $report['ok']++;
+
+                    continue;
+                }
+
+                [$document, $createdRefs] = $this->createDocument($data, $tenantId, $report);
+                $report['referentials_created'] += $createdRefs;
+                $report['ok']++;
+                $seenIds[$data['id']] = true;
+
+                // Attachement du fichier (optionnel) : colonne « fichier » = chemin serveur,
+                // tous formats autorisés par la politique MIME du tenant.
+                if (! empty($data['fichier']) && is_file($data['fichier'])) {
+                    try {
+                        // Acteur disposant de documents.edit (rôle tenant_admin du tenant) —
+                        // l'import administratif ne doit pas être bloqué par le cycle de vie.
+                        $actor = User::withoutGlobalScopes()
+                            ->where('tenant_id', $tenantId)
+                            ->whereHas('roles', fn ($q) => $q->where('roles.slug', 'tenant_admin'))
+                            ->first()
+                            ?? User::withoutGlobalScopes()->where('tenant_id', $tenantId)->first()
+                            ?? User::withoutGlobalScopes()->first();
+
+                        // Contexte tenant requis pour que les rôles/permissions soient résolus.
+                        $previous = TenantContext::get();
+                        TenantContext::set($tenantId);
+                        try {
+                            app(DocumentService::class)->addVersion(
+                                $actor,
+                                $document,
+                                new UploadedFile($data['fichier'], basename($data['fichier'])),
+                                'Version initiale (import CSV)'
+                            );
+                        } finally {
+                            TenantContext::set($previous);
+                        }
+                    } catch (\Throwable $e) {
+                        $report['file_errors'][] = "Ligne $line ({$data['code']}) : fichier non attaché — ".$e->getMessage();
+                    }
+                } elseif (! empty($data['fichier'])) {
+                    $report['file_errors'][] = "Ligne $line ({$data['code']}) : fichier introuvable — document créé sans fichier.";
+                }
+            } catch (\Throwable $e) {
+                $report['errors'][] = "Ligne $line : {$e->getMessage()}";
             }
         }
 

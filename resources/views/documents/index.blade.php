@@ -118,7 +118,7 @@
                 </td>
                 <td>{{ $doc->space->name ?? '—' }}</td>
                 <td>{{ $doc->type->name ?? '—' }}</td>
-                <td>v{{ $doc->currentVersion->version ?? '—' }}</td>
+                <td>@if ($doc->currentVersion)v{{ $doc->currentVersion->version }}@else<span class="badge bg-warning text-dark">sans fichier</span>@endif</td>
                 <td><span class="badge bg-{{ $doc->status === 'approved' ? 'success' : ($doc->status === 'archived' ? 'secondary' : 'info') }}">{{ $doc->statusLabel() }}</span></td>
                 <td class="small text-muted">{{ $doc->updated_at->diffForHumans() }}</td>
                 @foreach ($extraColumns as $key => $label)

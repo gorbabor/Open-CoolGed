@@ -16,6 +16,9 @@
         @if ($document->space?->is_personal && $document->space->personal_user_id === auth()->id())
             <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#publishPersonal">Publier dans un espace</button>
         @endif
+        @if (!$document->currentVersion)
+            <span class="badge bg-warning text-dark align-self-center">sans fichier</span>
+        @endif
         @if ($canDownload)
             <a href="{{ route('documents.download', $document) }}" class="btn btn-outline-primary"><i class="bi bi-download"></i> {{ __('Télécharger') }}</a>
         @endif
@@ -43,6 +46,11 @@
             @endif
         </div>
     </div>
+</div>
+@else
+<div class="alert alert-warning py-2 small">
+    <i class="bi bi-exclamation-triangle"></i> Ce document n'a pas encore de fichier.
+    @if ($contentEditable) Joignez une première version depuis l'onglet <strong>Versions</strong> ci-dessous. @endif
 </div>
 @endif
 

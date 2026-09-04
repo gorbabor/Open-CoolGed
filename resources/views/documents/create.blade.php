@@ -93,8 +93,9 @@
             <input type="date" name="expiration_at" class="form-control">
         </div>
         <div class="col-md-6 mb-3">
-            <label class="form-label">{{ __('Fichier') }} * (PDF, Office, TXT, CSV, images)</label>
-            <input type="file" name="file" class="form-control" required>
+            <label class="form-label">{{ __('Fichier') }} (PDF, Office, TXT, CSV, images)</label>
+            <input type="file" name="file" id="docFile" class="form-control">
+            <div class="form-text">{{ __('Optionnel : le fichier peut être joint plus tard depuis la fiche (onglet Versions).') }}</div>
         </div>
         @if ($definitions->isNotEmpty())
             <div class="col-12 mb-3">
@@ -114,13 +115,25 @@
             <input type="text" name="tags[]" class="form-control" placeholder="contrat, 2026…">
         </div>
     </div>
-    <button class="btn btn-primary"><i class="bi bi-upload"></i> {{ __('Importer et créer') }}</button>
+    <button type="submit" class="btn btn-primary" id="createBtn"><i class="bi bi-upload"></i> <span id="createBtnLabel">{{ __('Importer et créer') }}</span></button>
 </form>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const spaceSelect = document.getElementById('spaceSelect');
     const folderSelect = document.getElementById('folderSelect');
+    const docFile = document.getElementById('docFile');
+    const createBtnLabel = document.getElementById('createBtnLabel');
+
+    if (docFile && createBtnLabel) {
+        const refreshLabel = () => {
+            createBtnLabel.textContent = docFile.files.length > 0
+                ? 'Importer et créer'
+                : 'Créer la fiche (sans fichier)';
+        };
+        docFile.addEventListener('change', refreshLabel);
+        refreshLabel();
+    }
 
     if (!spaceSelect || !folderSelect) return;
 

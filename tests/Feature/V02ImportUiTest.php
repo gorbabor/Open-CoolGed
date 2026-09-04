@@ -17,7 +17,8 @@ class V02ImportUiTest extends TestCase
         $this->get(route('admin.import-csv'))
             ->assertOk()
             ->assertSee('Import CSV')
-            ->assertSee('Télécharger le template');
+            ->assertSee('Télécharger le modèle Excel')
+            ->assertSee('Template CSV');
     }
 
     public function test_import_csv_template_downloads_csv(): void

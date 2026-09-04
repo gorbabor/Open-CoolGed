@@ -158,6 +158,7 @@ Route::middleware(['auth', 'tenant.context', 'tenant.active', 'app.locale'])->gr
         // Import CSV (registre V02) — formulaire, template et traitement.
         Route::get('/import-csv', [V02Controller::class, 'importCsvForm'])->name('import-csv');
         Route::get('/import-csv/template', [V02Controller::class, 'downloadTemplate'])->name('import-csv.template');
+        Route::get('/import-csv/template-xlsx', [V02Controller::class, 'downloadTemplateXlsx'])->name('import-csv.template-xlsx');
         Route::post('/import-csv', [V02Controller::class, 'importCsv'])->name('import-csv.post');
     });
 });
