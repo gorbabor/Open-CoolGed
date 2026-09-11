@@ -79,14 +79,14 @@ Refus si l'utilisateur n'a pas la permission `ai.use` sur le document (`403`).
 
 ```bash
 # Liste des documents accessibles
-curl -H "Authorization: Bearer $TOKEN" http://localhost/kaeged/public/api/v1/documents
+curl -H "Authorization: Bearer $TOKEN" https://votre-domaine/api/v1/documents
 
 # Recherche
-curl -H "Authorization: Bearer $TOKEN" "http://localhost/kaeged/public/api/v1/search?q=contrat"
+curl -H "Authorization: Bearer $TOKEN" "https://votre-domaine/api/v1/search?q=contrat"
 
 # Lancement d'un job IA
 curl -X POST -H "Authorization: Bearer $TOKEN" \
-  "http://localhost/kaeged/public/api/v1/documents/1/ai?job_type=summary"
+  "https://votre-domaine/api/v1/documents/1/ai?job_type=summary"
 ```
 
 ## Évolutions V2

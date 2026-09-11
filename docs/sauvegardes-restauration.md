@@ -25,8 +25,9 @@ manifest.json     # horodatage, app, driver db, nb de fichiers
 ```
 
 - Si `mysqldump` est indisponible, le dump SQL est omis et **l'export JSON suffit** (restauration possible).
-- Chemins des binaires : `.env` → `GED_MYSQLDUMP_PATH`, `GED_MYSQL_PATH`
-  (défaut local : `E:\xampp\mysql\bin\mysqldump.exe` / `mysql.exe`).
+- Chemins des binaires : par défaut résolus depuis le `PATH` ; définir les chemins
+  absolus dans `.env` → `GED_MYSQLDUMP_PATH`, `GED_MYSQL_PATH` si l'hébergeur
+  ne les expose pas.
 
 ## Planification (scheduler)
 

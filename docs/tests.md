@@ -1,6 +1,6 @@
 # Tests
 
-Suite : PHPUnit via Laravel (`php artisan test`) — 45 tests / 140 assertions, tout vert.
+Suite : PHPUnit via Laravel (`php artisan test`) — 263 tests / 1 067 assertions, tout vert.
 Base de test : SQLite en mémoire (phpunit.xml), migrations + seed des rôles à chaque test.
 
 ## Exécution
@@ -47,5 +47,5 @@ php artisan test --filter=BackupRestore
 
 ## Qualité
 
-- `php vendor/bin/pint` : style PSR-12/Laravel (96 fichiers, 0 issue).
+- `php vendor/bin/pint` : style PSR-12/Laravel (183 fichiers, 0 issue).
 - Pas de dépendance de test externe (fake files, sqlite mémoire, mock providers).

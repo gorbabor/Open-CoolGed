@@ -2,7 +2,8 @@
 
 Implémentation du cahier des charges `Cahier_des_Charges_GED_SaaS_Multi_Tenant_V1.0`
 (plateforme de Gestion Électronique de Documents, SaaS multi-tenant, ~1 000 utilisateurs,
-plusieurs centaines de milliers de documents, hébergement cPanel/XAMPP).
+plusieurs centaines de milliers de documents). Développement : PHP 8.4 + MySQL/MariaDB ;
+production : hébergement mutualisé cPanel (voir la section Déploiement).
 
 **Documentation technique** : voir [`docs/`](docs/README.md) — architecture, modèle de
 données, API, sécurité, workflows & règles métier, sauvegardes, déploiement, tests.
@@ -10,27 +11,35 @@ données, API, sécurité, workflows & règles métier, sauvegardes, déploiemen
 ## Stack
 
 - PHP 8.4 + Laravel 13 (monolithe modulaire)
-- MySQL / MariaDB 8 (base locale `kaeged`)
+- MySQL / MariaDB 8 (base `open_coolged` en utf8mb4 ; SQLite accepté pour un essai rapide)
 - Blade + Bootstrap 5 (UI responsive, non-techniciens)
 - Queue : `sync` en dev (`QUEUE_CONNECTION=sync`) — database queue pour prod cPanel
 - Stockage : disque local `storage/app/private` (abstraction `StorageService`, S3 prêt via `GED_STORAGE_DISK`)
 - IA / OCR / Office : couche d'adaptateurs (fournisseur `mock` par défaut)
 
-## Installation locale (XAMPP)
+## Installation (développement)
+
+Prérequis : PHP 8.4+ (extensions mbstring, openssl, pdo_mysql, curl, gd, zip, intl),
+Composer 2, MySQL/MariaDB 8 (ou SQLite pour un essai rapide).
 
 ```bash
-cd E:\xampp\htdocs\kaeged
-copy .env.example .env          # déjà fait lors du create-project
-# .env : DB_CONNECTION=mysql, DB_HOST=127.0.0.1, DB_PORT=3306,
-#        DB_DATABASE=kaeged, DB_USERNAME=root, DB_PASSWORD=secret
-E:\xampp\mysql\bin\mysql.exe -u root -psecret -e "CREATE DATABASE kaeged CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-php composer.phar install       # ou composer install
+git clone https://github.com/gorbabor/Open-CoolGed.git
+cd Open-CoolGed
+cp .env.example .env
+# Renseigner dans .env : APP_URL et le bloc DB_* (compte MySQL dédié, base utf8mb4)
+composer install
 php artisan key:generate
+# Créer la base avec votre client MySQL habituel :
+#   CREATE DATABASE open_coolged CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 php artisan migrate --seed
 php artisan serve               # http://localhost:8000
 ```
 
 ## Comptes de démonstration (seeder)
+
+> **Environnement de démonstration uniquement.** Ces comptes sont créés par
+> `php artisan migrate --seed`. En production : ne pas exécuter le seeder, ou
+> changer immédiatement ces mots de passe (et désactiver/supprimer ces comptes).
 
 | Rôle | Email | Mot de passe |
 |------|-------|--------------|
@@ -42,16 +51,12 @@ php artisan serve               # http://localhost:8000
 ## Tests
 
 ```bash
-php artisan test        # 45 tests, 140 assertions (sqlite :memory:, isolation incluse)
+php artisan test        # suite complète : 263 tests / 1 067 assertions
 ```
 
-Couverture : isolation inter-tenant (CA-001/002), RBAC/refus explicite (CA-003, RM-008),
-versioning + checksum + restauration (CA-004/005), workflows (CA-006/007, RM-014/015),
-audit (CA-014), uploads (CA-012), quotas (CA-018, RM-020), secrets (CA-011),
-hors webroot (CA-013), pagination (CA-015), tenant suspendu (CA-017),
-IA (CA-009/010/016, RM-016/017), Office fallback (CA-019), RAG filtré (RM-019),
-sauvegarde/restauration (CA-020, démontré sur MySQL réel + test automatisé),
-rétention documentaire (RM-030), SSO par tenant (V2).
+Exécution sur SQLite en mémoire (aucune base externe requise) ; l'isolation
+multi-tenant, le RBAC, les workflows, les sauvegardes et la rétention sont
+couverts par la suite (voir `docs/tests.md` pour la correspondance CA/RM).
 
 ## Sauvegardes et planification (CDG §41, §24)
 
@@ -65,8 +70,9 @@ php artisan schedule:list
 ```
 
 Planification intégrée (`routes/console.php`) : sauvegarde quotidienne à 02:00,
-rétention à 03:00. Binaires MySQL configurés via `.env` :
-`GED_MYSQLDUMP_PATH` / `GED_MYSQL_PATH` (défaut `E:\xampp\mysql\bin\...`).
+rétention à 03:00. Les binaires `mysqldump` / `mysql` sont résolus depuis le `PATH` ;
+si l'hébergeur ne les expose pas, définir les chemins absolus via `.env` :
+`GED_MYSQLDUMP_PATH` / `GED_MYSQL_PATH`.
 
 ## Déploiement cPanel (CDG §39)
 

@@ -10,9 +10,9 @@ via jobs, services externes encapsulés par des adaptateurs.
 Navigateur Web
       │
       ▼
-Application Laravel / PHP 8.4 (E:\xampp\htdocs\kaeged)
+Application Laravel / PHP 8.4 (dépôt `gorbabor/Open-CoolGed`)
       │
-      ├── MySQL / MariaDB (base kaeged, utf8mb4)
+      ├── MySQL / MariaDB (base dédiée en utf8mb4 — voir `.env`)
       ├── Stockage documents : disque local storage/app/private (abstraction, S3 prêt)
       ├── Queue : sync en dev (database en prod cPanel)
       ├── Cron / Scheduler : sauvegarde 02:00, rétention 03:00

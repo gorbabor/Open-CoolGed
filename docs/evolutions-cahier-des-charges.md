@@ -1,7 +1,7 @@
 # Suivi des écarts — évolutions non prévues au cahier des charges
 
-> Copie de référence de `E:\xampp\htdocs\kaeged\docs\evolutions-cahier-des-charges.md` (source de vérité).
-> Dernière synchro : 2026-09-04.
+> Documentation de référence du projet Open-CoolGed — source de vérité de la documentation applicative.
+> Dernière synchro : 2026-09-11.
 
 Ce document trace **toutes les évolutions implémentées qui n'étaient pas prévues**
 dans `spec/cahier-des-charges-ged-saas-v1.0.docx` (12/08/2026).

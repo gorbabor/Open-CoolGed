@@ -1,6 +1,7 @@
 # Modèle de données
 
-Base MySQL `kaeged` (utf8mb4/utf8mb4_unicode_ci). Migrations dans `database/migrations/`.
+Base MySQL / MariaDB (utf8mb4 / utf8mb4_unicode_ci — nom de base et identifiants
+configurés dans le fichier `.env`). Migrations dans `database/migrations/`.
 Convention : **toute entité métier porte `tenant_id`** (FK vers `tenants`, cascade delete)
 et utilise le trait `BelongsToTenant` (scope global).
 

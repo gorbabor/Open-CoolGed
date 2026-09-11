@@ -1,7 +1,7 @@
 # Périmètre V02 — GED documentaire opérationnelle
 
-> Copie de référence de `E:\xampp\htdocs\kaeged\docs\perimetre-v02.md` (source de vérité).
-> Dernière synchro : 2026-08-20.
+> Documentation de référence du projet Open-CoolGed — source de vérité de la documentation applicative.
+> Dernière synchro : 2026-09-11.
 
 Adaptation de Kaeged au document « Projet Odoo — GED documentaire opérationnelle V02 »
 (GED documentaire opérationnelle V02.eml), sur la base du mapping conceptuel suivant.

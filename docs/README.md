@@ -12,7 +12,7 @@ Plateforme Web GED SaaS Multi-Tenant — Laravel 13 / PHP 8.4 / MySQL.
 | [Sécurité](security.md) | Isolation tenant, RBAC, uploads, secrets, IA, correspondance CA/RM |
 | [Workflows & règles métier](workflows-regles-metier.md) | Moteur de workflow, transitions, rétention, règles RM |
 | [Sauvegardes & restauration](sauvegardes-restauration.md) | Commandes, scheduler, procédure de reprise |
-| [Déploiement](deploiement.md) | Installation locale XAMPP, déploiement cPanel, escalade VPS |
+| [Déploiement](deploiement.md) | Installation (développement), déploiement cPanel, escalade VPS |
 | [Tests](tests.md) | Suite de tests, couverture des critères d'acceptation |
 | [Manuel utilisateur](manuel-utilisateur.md) | Guide d'utilisation quotidienne (connexion, documents, workflows, IA, administration) |
 | [Viewers & éditeurs en ligne](office-viewers-edit.md) | Aperçu/édition des formats (texte, markdown, PDF, Office) et sécurité associée |
@@ -23,5 +23,6 @@ Plateforme Web GED SaaS Multi-Tenant — Laravel 13 / PHP 8.4 / MySQL.
 ## Références
 
 - Cahier des charges : `Cahier_des_Charges_GED_SaaS_Multi_Tenant_V1.0.docx`
-- Code source : `E:\xampp\htdocs\kaeged`
-- Base de données : `kaeged` (MySQL, user `root`, mot de passe dans `.env`)
+- Code source : dépôt [`gorbabor/Open-CoolGed`](https://github.com/gorbabor/Open-CoolGed)
+- Base de données : MySQL / MariaDB — bloc `DB_*` du fichier `.env`
+  (compte dédié recommandé, base en utf8mb4)

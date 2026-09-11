@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Procédure d'installation cPanel — Kaeged GED</title>
+<title>Procédure d'installation cPanel — Open-CoolGed</title>
 <style>
   :root {
     --brand: #0d6efd;
@@ -95,7 +95,7 @@
 <body>
 
 <header class="hero">
-  <h1>Procédure d'installation cPanel — Kaeged GED</h1>
+  <h1>Procédure d'installation cPanel — Open-CoolGed</h1>
   <p>Déploiement pas à pas de la plateforme GED SaaS multi-tenant (Laravel 13 / PHP 8.4 / MySQL)
      sur un hébergement cPanel partagé.</p>
   <p>Document lié : <code>spec/cahier-des-charges-ged-saas-v1.0.docx</code> (CDG §39 « Contraintes cPanel »)
@@ -201,7 +201,7 @@ composer install --no-dev --optimize-autoloader</pre>
     <li>Éditer les valeurs (voir modèle ci-dessous)</li>
     <li>Générer la clé : <code>php artisan key:generate</code> (terminal)</li>
   </ol>
-  <pre class="code">APP_NAME="Kaeged GED"
+  <pre class="code">APP_NAME="Open-CoolGed"
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://ged.entreprise.com
@@ -323,7 +323,7 @@ php artisan event:cache</pre>
     <li><strong>Forcer HTTPS</strong> : dans cPanel « Domains » ou via le .htaccess (redirection 301)</li>
     <li><strong>APP_DEBUG=false</strong> vérifié (aucun détail technique exposé)</li>
     <li><strong>Backups</strong> : configurer la sauvegarde de l'hébergeur + déporter les sauvegardes
-      Kaeged (storage/backups) hors du disque mutualisé (FTP/S3)</li>
+      Open-CoolGed (storage/backups) hors du disque mutualisé (FTP/S3)</li>
     <li><strong>Comptes</strong> : supprimer les comptes démo, forcer MFA sur le super admin</li>
     <li><strong>Permissions</strong> : vérifier que <code>storage/app/private</code> (documents)
       n'est jamais accessible via HTTP</li>
@@ -370,7 +370,7 @@ php artisan event:cache</pre>
 </main>
 
 <footer>
-  Procédure d'installation cPanel — Kaeged GED · v1.0 · Référence : cahier des charges §39 et docs/deploiement.md
+  Procédure d'installation cPanel — Open-CoolGed · v1.0 · Référence : cahier des charges §39 et docs/deploiement.md
 </footer>
 
 </body>

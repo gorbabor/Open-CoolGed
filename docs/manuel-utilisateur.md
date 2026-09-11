@@ -8,7 +8,7 @@ validateur, manager, administrateur du tenant et super administrateur.
 
 ## 1. Connexion
 
-1. Ouvrir l'URL de la plateforme (ex. `http://localhost/kaeged/public`).
+1. Ouvrir l'URL de la plateforme (ex. `https://votre-domaine`).
 2. Saisir votre **email** et votre **mot de passe**, puis « Se connecter ».
 3. Si l'authentification à deux facteurs (MFA) est activée sur votre compte,
    saisir le **code à 6 chiffres** de votre application d'authentification.

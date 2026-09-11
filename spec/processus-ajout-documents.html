@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Processus d'ajout de documents — Kaeged GED V02</title>
+<title>Processus d'ajout de documents — Open-CoolGed V02</title>
 <style>
   :root {
     --brand: #0d6efd;
@@ -108,7 +108,7 @@
   <h1>Processus d'ajout de documents — Système Documentaire V02</h1>
   <p>De la création de la structure (Section → Lot) à l'ajout d'un document, puis à sa
      qualification transversale (Famille, Domaine, Processus, Entité, Pays, Site, Poste/Département).</p>
-  <p>Application : Kaeged GED — <code>https://kaeged.kaenergie.com</code></p>
+  <p>Application : Open-CoolGed — <code>https://kaeged.kaenergie.com</code></p>
   <span class="badge">Processus d'ajout de documents — V02 · v1.0</span>
 </header>
 
@@ -144,10 +144,10 @@
 </div>
 
 <!-- ============ 2. HIÉRARCHIE ============ -->
-<h2 id="hierarchie">2. Hiérarchie Section → Lot → Document (implémentation Kaeged)</h2>
+<h2 id="hierarchie">2. Hiérarchie Section → Lot → Document (implémentation Open-CoolGed)</h2>
 <div class="card">
   <table>
-    <tr><th>Niveau V02</th><th>Objet Kaeged</th><th>Où le gérer</th><th>Exemple</th></tr>
+    <tr><th>Niveau V02</th><th>Objet Open-CoolGed</th><th>Où le gérer</th><th>Exemple</th></tr>
     <tr><td><strong>Système Documentaire V02</strong></td><td>Tenant (l'entreprise)</td><td>— (racine)</td><td>Entreprise Démo SA</td></tr>
     <tr><td><strong>Section</strong></td><td><strong>Espace</strong> (<code>spaces</code>)</td><td>Menu « Espaces » → créer / renommer / supprimer</td><td>Section 00 — Gouvernance documentaire</td></tr>
     <tr><td><strong>Lot</strong></td><td><strong>Dossier</strong> (<code>folders</code>)</td><td>Dans un espace (menu « Espaces »)</td><td>Lot 00 — Contrats 2026</td></tr>
@@ -164,7 +164,7 @@
   <p>En plus de sa position dans l'arborescence, chaque document est décrit par des
      <strong>qualificatifs transversaux</strong> (indépendants du classement) :</p>
   <table>
-    <tr><th>Qualificatif</th><th>Objet Kaeged</th><th>Valeurs / exemples</th><th>État actuel dans l'appli</th></tr>
+    <tr><th>Qualificatif</th><th>Objet Open-CoolGed</th><th>Valeurs / exemples</th><th>État actuel dans l'appli</th></tr>
     <tr><td><strong>Famille</strong></td><td>Type documentaire (<code>document_types</code>)</td><td>POL, MAN, PRC, INS, FOR, MOD, MAT, RAP, REF, REG, TDB, CHK, AUT…</td><td class="ok">Sélection au formulaire de création + CRUD (Admin → Types)</td></tr>
     <tr><td><strong>Domaine</strong></td><td>Référentiel <code>domain</code></td><td>Gouvernance, Finances, Juridique, RH…</td><td class="warn">Référentiel géré (Admin → Référentiels) ; affectation au document via import CSV ou base</td></tr>
     <tr><td><strong>Processus</strong></td><td>Référentiel <code>process</code></td><td>Gestion des contrats, Paie, Achats…</td><td class="warn">Idem</td></tr>
@@ -321,7 +321,7 @@
 </main>
 
 <footer>
-  Processus d'ajout de documents — Kaeged GED V02 · v1.0 · Application : kaeged.kaenergie.com
+  Processus d'ajout de documents — Open-CoolGed (ex-Kaeged GED) V02 · v1.0 · Application : kaeged.kaenergie.com
 </footer>
 
 </body>

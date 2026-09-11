@@ -1,30 +1,32 @@
 # Déploiement
 
-## 1. Installation locale (XAMPP)
+## 1. Installation (développement)
 
 ### Prérequis
 
-- **PHP 8.4+** (obligatoire : Laravel 13 / Symfony exigent PHP >= 8.4.1).
-  XAMPP standard fournit PHP 8.2 → installer une build **Thread-Safe** 8.4 dans
-  `E:\xampp\php84` et repointée `apache/conf/extra/httpd-xampp.conf`
-  (LoadFile `php8ts.dll`, LoadModule `php8apache2_4.dll`, `PHPRC`, `PHPINIDir`).
-- MySQL/MariaDB (XAMPP), Composer (ou `php composer.phar`).
+- **PHP 8.4+** (obligatoire : Laravel 13 / Symfony exigent PHP >= 8.4.1) avec les
+  extensions mbstring, openssl, pdo_mysql, curl, gd, zip et intl.
+- **Composer 2**.
+- **MySQL / MariaDB 8** (ou SQLite pour un essai rapide).
 
 ### Installation
 
 ```bash
-cd E:\xampp\htdocs\kaeged
-# .env : DB_CONNECTION=mysql, DB_HOST=127.0.0.1, DB_PORT=3306,
-#        DB_DATABASE=kaeged, DB_USERNAME=root, DB_PASSWORD=secret
-E:\xampp\mysql\bin\mysql.exe -u root -psecret -e "CREATE DATABASE kaeged CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+git clone https://github.com/gorbabor/Open-CoolGed.git
+cd Open-CoolGed
+cp .env.example .env
+# Renseigner dans .env : APP_URL et le bloc DB_* (compte MySQL dédié, base utf8mb4)
 composer install
 php artisan key:generate
+# Créer la base avec votre client MySQL habituel :
+#   CREATE DATABASE open_coolged CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 php artisan migrate --seed
-php artisan serve                 # dev : http://localhost:8000
-# ou via Apache : http://localhost/kaeged/public
+php artisan serve                 # http://localhost:8000
 ```
 
-### Comptes de démonstration (seeder)
+> **Comptes de démonstration (seeder)** — environnement de démonstration
+> uniquement : en production, ne pas exécuter le seeder ou changer immédiatement
+> ces mots de passe.
 
 | Rôle | Email | Mot de passe |
 |------|-------|--------------|
