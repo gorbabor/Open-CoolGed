@@ -1,10 +1,10 @@
 # Suivi des écarts — évolutions non prévues au cahier des charges
 
 > Documentation de référence du projet Open-CoolGed — source de vérité de la documentation applicative.
-> Dernière synchro : 2026-09-11.
+> Dernière synchro : 2026-09-21.
 
 Ce document trace **toutes les évolutions implémentées qui n'étaient pas prévues**
-dans `spec/cahier-des-charges-ged-saas-v1.0.docx` (12/08/2026).
+dans le cahier des charges client (document non hébergé dans le dépôt, daté du 12/08/2026).
 Il doit être **mis à jour à chaque itération** (règle de travail permanente).
 
 ## Écarts implémentés

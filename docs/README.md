@@ -22,7 +22,7 @@ Plateforme Web GED SaaS Multi-Tenant — Laravel 13 / PHP 8.4 / MySQL.
 
 ## Références
 
-- Cahier des charges : `Cahier_des_Charges_GED_SaaS_Multi_Tenant_V1.0.docx`
+- Cahier des charges : document client — non hébergé dans le dépôt (conservé hors dépôt)
 - Code source : dépôt [`gorbabor/Open-CoolGed`](https://github.com/gorbabor/Open-CoolGed)
 - Base de données : MySQL / MariaDB — bloc `DB_*` du fichier `.env`
   (compte dédié recommandé, base en utf8mb4)

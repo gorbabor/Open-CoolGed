@@ -8,6 +8,16 @@ production : hébergement mutualisé cPanel (voir la section Déploiement).
 **Documentation technique** : voir [`docs/`](docs/README.md) — architecture, modèle de
 données, API, sécurité, workflows & règles métier, sauvegardes, déploiement, tests.
 
+## Visibilité du dépôt et contenus client
+
+- **Documents client non hébergés** : le cahier des charges (Word) et la spécification
+  transmise par le client ne sont **pas** versionnés dans ce dépôt — ils sont conservés
+  hors dépôt (côté client/projet). Les fichiers `spec/*.html` qui en dérivent y font
+  référence sous « CDG §xx ».
+- **Recommandation** : conserver ce dépôt **privé** tant qu'il porte un livrable client
+  (GitHub → Settings → General → Danger Zone → Change visibility).
+- **Licence** : Apache-2.0 (voir `LICENSE`) — à confirmer selon les termes du contrat client.
+
 ## Stack
 
 - PHP 8.4 + Laravel 13 (monolithe modulaire)

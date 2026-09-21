@@ -6,13 +6,16 @@
 
 | Fichier | Type | Référence |
 |---------|------|-----------|
-| `cahier-des-charges-ged-saas-v1.0.docx` | Cahier des charges SaaS (source client, Word) | CDG (références `CDG §xx` dans la doc) |
-| `spec-v02.md` | Spécification fonctionnelle & technique **source** (périmètre V02) | Transcription brute (tableaux aplatis, mots fusionnés) ; l'original `.eml` n'est pas dans le dépôt |
 | `documentation-administrateur.html` | Guide administrateur (utilisateurs, rôles, référentiels, workflows, audit, super admin) | — |
 | `procedure-installation-cpanel.html` | Procédure d'installation cPanel | CDG §39 « Contraintes cPanel » |
-| `procedure-parametrage-v02.html` | Procédure de paramétrage du périmètre V02 | Dérivé de `spec-v02.md` |
-| `processus-ajout-documents.html` | Processus d'ajout de documents (Section → Lot → Document + qualification transversale) | Dérivé de `spec-v02.md` |
+| `procedure-parametrage-v02.html` | Procédure de paramétrage du périmètre V02 | Dérivé de la spécification V02 client (non hébergée dans le dépôt) |
+| `processus-ajout-documents.html` | Processus d'ajout de documents (Section → Lot → Document + qualification transversale) | Dérivé de la spécification V02 client (non hébergée dans le dépôt) |
 | `restreindre-acces-espaces.html` | Guide : restreindre la visibilité d'un espace partagé à une partie des utilisateurs (refus explicites scopés par espace) | RBAC scopé (écart n°35) |
+
+> **Documents client** : le cahier des charges (Word) et la spécification V02 transmise
+> par le client **ne sont pas hébergés dans ce dépôt** — ils sont conservés hors dépôt
+> (côté client/projet). Les documents de ce dossier qui en dérivent y font référence
+> sous « CDG §xx ».
 
 ### Documentation applicative (`docs/`)
 

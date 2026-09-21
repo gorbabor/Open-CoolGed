@@ -38,3 +38,8 @@ cdg_extract.txt
 # Artefacts de déploiement cPanel
 deploy-opencoolged.sh
 opencoolged-deploy.zip
+
+# Documents client/contractuels — ne pas héberger dans le dépôt
+# (cahier des charges, spécification transmise : conservés hors dépôt, côté client)
+spec/cahier-des-charges-*.docx
+spec/spec-v02.md
