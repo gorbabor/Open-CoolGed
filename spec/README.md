@@ -30,5 +30,9 @@
 - `-v02` suffixe = document relatif au **périmètre V02** (même sans suffixe, les autres
   documents dérivent de la même spécification).
 - Les guides HTML sont **autonomes** (ouvrables directement dans un navigateur, sans serveur).
+- **Guides HTML — copies de publication** : les 5 guides de `spec/` sont des copies
+  **byte-identiques** des guides du dépôt de documentation (référence) — toute évolution doit
+  être reportée des deux côtés. **Documents client** (cahier des charges, spécification V02) :
+  non hébergés ici — conservés hors du dépôt applicatif.
 - Les évolutions hors cahier des charges sont tracées dans
   `docs/evolutions-cahier-des-charges.md` (numérotation continue des écarts).

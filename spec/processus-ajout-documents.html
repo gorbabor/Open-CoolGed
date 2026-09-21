@@ -230,10 +230,12 @@
     <tr><td>Espace</td><td><strong>Section</strong> du Système Documentaire</td><td class="danger">Oui</td></tr>
     <tr><td>Dossier</td><td><strong>Lot</strong> (filtré selon la section choisie)</td><td>Non</td></tr>
     <tr><td>Type documentaire</td><td><strong>Famille</strong> (POL, MAN, PRC…)</td><td>Non</td></tr>
+    <tr><td>Domaine / Processus</td><td>Référentiels documentaires</td><td>Non</td></tr>
+    <tr><td>Référentiels d'application</td><td>Poste, département, direction, site, entité, pays</td><td>Non</td></tr>
     <tr><td>Confidentialité</td><td>public / internal / confidential / secret</td><td>Non (défaut : internal)</td></tr>
     <tr><td>Description</td><td>Contexte du document</td><td>Non</td></tr>
     <tr><td>Date d'expiration</td><td>Échéance (si applicable)</td><td>Non</td></tr>
-    <tr><td>Fichier</td><td>PDF, Office, TXT, CSV, images (selon politique du tenant)</td><td class="danger">Oui</td></tr>
+    <tr><td>Fichier</td><td>PDF, Office, TXT, CSV, images (selon politique du tenant)</td><td>Non — joignable plus tard via l'onglet Versions (badge « sans fichier »)</td></tr>
     <tr><td>Métadonnées</td><td>Champs définis par la famille (si configurés)</td><td>Selon définition</td></tr>
     <tr><td>Tags</td><td>Mots-clés libres</td><td>Non</td></tr>
   </table>
@@ -241,10 +243,10 @@
 
 <div class="step">
   <span class="num">3</span><span class="title">Valider</span>
-  <div class="where">Bouton « Importer et créer »</div>
+  <div class="where">Bouton « Importer et créer » (ou « Créer la fiche (sans fichier) » si aucun fichier choisi)</div>
   <ul class="checklist">
-    <li>Le fichier est stocké hors webroot (jamais d'URL publique — RM-012)</li>
-    <li>Une première version (v1.0) est créée avec empreinte (checksum)</li>
+    <li>Avec fichier : stocké hors webroot (jamais d'URL publique — RM-012) et première version (v1.0) créée avec empreinte (checksum)</li>
+    <li>Sans fichier : la fiche est créée avec un badge « sans fichier » ; joindre la première version plus tard via l'onglet Versions (bouton « Créer une version ») — l'approbation reste bloquée tant qu'aucun fichier n'est attaché</li>
     <li>Vous arrivez sur la fiche document : aperçu, versions, métadonnées, workflow, partage…</li>
   </ul>
 </div>
@@ -259,19 +261,13 @@
 
 <div class="step">
   <span class="num">2</span><span class="title">Domaine, Processus, Entité, Pays, Site, Poste/Département</span>
-  <div class="where">État actuel</div>
+  <div class="where">Formulaire « Importer un document » ou fiche document → onglet Métadonnées</div>
   <ul class="checklist">
     <li><strong>Valeurs gérées</strong> : Administration → Référentiels (création, renommage, suppression si non utilisé)</li>
-    <li><strong>Affectation au document</strong> :
-      <ul>
-        <li>par <strong>import du registre CSV</strong> (<code>php artisan v02:import</code>) — crée sections, lots, familles et domaines automatiquement ; ou</li>
-        <li>directement en base (<code>documents.domain_id</code>, <code>process_id</code>, pivot <code>document_referential</code> pour les dimensions multi-valeurs)</li>
-      </ul>
-    </li>
-    <li>Les dimensions de l'<strong>utilisateur</strong> (poste, département, direction, site, entité, pays) sont portées par son profil — elles servent au filtre « Mes documents »</li>
+    <li><strong>Affectation au document</strong> : sélectionner Domaine et Processus, puis les référentiels d'application (poste, département, direction, site, entité, pays) directement dans l'interface de création ou de modification.</li>
+    <li><strong>Import CSV</strong> : les colonnes <code>domaine</code>, <code>processus</code> et <code>application</code> créent et lient aussi ces valeurs automatiquement.</li>
+    <li>Les dimensions de l'<strong>utilisateur</strong> (poste, département, direction, site, entité, pays) sont renseignées dans Administration → Utilisateurs — elles servent au filtre « Mes documents ».</li>
   </ul>
-  <div class="dangerbox"><strong>Évolution recommandée</strong> : ajouter ces champs au formulaire
-  de création/édition du document (sélecteurs de référentiels) pour une saisie 100 % UI.</div>
 </div>
 
 <!-- ============ 7. ÉTAPE 4 ============ -->
@@ -290,9 +286,9 @@
 <!-- ============ 8. IMPORT ============ -->
 <h2 id="import">8. Raccourci — import du registre maître (CSV)</h2>
 <div class="card">
-  <p>Pour initialiser le Système Documentaire V02 en masse (sections, lots, familles, domaines, statuts) :</p>
-  <pre class="code">php artisan v02:import registre.csv [--tenant=1] [--dry-run]</pre>
-  <p>Colonnes : <code>id;code;titre;section;lot;famille;version;statut;proprietaire;date_application;prochaine_revue;domaine;criticite</code></p>
+  <p>Pour initialiser le Système Documentaire V02 en masse (sections, lots, familles, dimensions et statuts), utiliser <strong>Administration → Import CSV</strong> et télécharger le template.</p>
+  <p>La commande technique reste disponible : <code>php artisan v02:import registre.csv [--tenant=1] [--dry-run]</code></p>
+  <p>Colonnes actuelles : <code>id;code;titre;description;section;lot;famille;statut;proprietaire;domaine;processus;application;criticite;date_application;prochaine_revue;fichier</code></p>
   <ul class="checklist">
     <li>Crée automatiquement : espaces (sections), dossiers (lots), types (familles), référentiels (domaines)</li>
     <li>Contrôles : id/code obligatoires et uniques, statut parmi les 7 valeurs V02</li>

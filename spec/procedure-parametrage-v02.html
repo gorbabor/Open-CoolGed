@@ -101,7 +101,7 @@
   <h1>Procédure de paramétrage — GED documentaire opérationnelle V02</h1>
   <p>Guide pas à pas pour reproduire le système documentaire décrit dans
      « GED documentaire opérationnelle V02 » sur la plateforme <strong>Open-CoolGed (ex-Kaeged)</strong>.</p>
-  <p>Document source : spécification V02 client (document non hébergé dans le dépôt) — cible retenue : application Laravel Open-CoolGed
+  <p>Document source : spécification V02 client — cible retenue : application Laravel Open-CoolGed
      (les points spécifiques à Odoo sont hors périmètre).</p>
   <span class="badge">Procédure opérationnelle — v1.0</span>
 </header>
@@ -413,10 +413,12 @@ approuvé/applicable → obsolète/archivé   (remplacement ou retrait)</pre>
 <h2 id="import">4. Import du registre maître (optionnel)</h2>
 
 <div class="card">
-  <h3>4.1 Préparer le fichier CSV</h3>
-  <p>13 colonnes, séparateur point-virgule <code>;</code>, en-tête obligatoire :</p>
-  <pre class="code">id;code;titre;section;lot;famille;version;statut;proprietaire;date_application;prochaine_revue;domaine;criticite
-001;KAE-DOC-POL-001;Politique de gouvernance documentaire;00 - Gouvernance;Lot 00;POL;V01;approuve_applicable;;2026-01-01;2027-01-01;GOV;critical</pre>
+  <h3>4.1 Préparer le fichier</h3>
+  <p>Utiliser l'interface <strong>Administration → Import CSV</strong> — deux modèles téléchargeables :
+  <strong>modèle Excel (.xlsx)</strong> (recommandé, 16 colonnes pré-remplies + 2 exemples) ou
+  <strong>template CSV</strong> (séparateur point-virgule <code>;</code>). Les deux comportent 16 colonnes :</p>
+  <pre class="code">id;code;titre;description;section;lot;famille;statut;proprietaire;domaine;processus;application;criticite;date_application;prochaine_revue;fichier
+001;KAE-DOC-POL-001;Politique de gouvernance documentaire;Politique groupe;00 - Gouvernance;Lot 00;POL;brouillon;;GOV;Gouvernance documentaire;"site:Siège;country:Côte d'Ivoire";critical;2026-01-01;2027-01-01;/chemin/serveur/politique.pdf</pre>
   <table>
     <tr><th>Colonne</th><th>Contrainte</th></tr>
     <tr><td>id</td><td>obligatoire, unique</td></tr>
@@ -424,19 +426,23 @@ approuvé/applicable → obsolète/archivé   (remplacement ou retrait)</pre>
     <tr><td>titre</td><td>obligatoire</td></tr>
     <tr><td>section / lot</td><td>créés automatiquement si absents</td></tr>
     <tr><td>famille</td><td>créée automatiquement si absente</td></tr>
-    <tr><td>version</td><td>obligatoire (V01, V02…)</td></tr>
+    <tr><td>description</td><td>optionnelle</td></tr>
     <tr><td>statut</td><td>une des 7 valeurs : a_creer, brouillon, en_verification, en_approbation, approuve_applicable, en_revision, obsolete_archive</td></tr>
     <tr><td>proprietaire</td><td>nom d'un utilisateur existant du tenant</td></tr>
+    <tr><td>domaine / processus</td><td>référentiels créés et liés automatiquement si absents</td></tr>
+    <tr><td>application</td><td>optionnelle : <code>type:nom;type:nom</code> (ex. <code>site:Siège;country:Côte d'Ivoire</code>) ; mettre entre guillemets si plusieurs valeurs</td></tr>
+    <tr><td>criticite</td><td>standard, important, critical</td></tr>
     <tr><td>date_application / prochaine_revue</td><td>format AAAA-MM-JJ</td></tr>
-    <tr><td>domaine / criticite</td><td>référentiel / standard, important, critical</td></tr>
+    <tr><td>fichier</td><td>optionnel : chemin absolu du fichier déjà présent sur le serveur</td></tr>
   </table>
 
   <h3>4.2 Lancer l'import</h3>
+  <p>Dans l'interface : <strong>Administration → Import CSV</strong>, choisir le fichier puis cliquer <strong>Importer</strong>. Le rapport affiche les documents créés, les erreurs et les avertissements de fichiers.</p>
+  <p>La commande CLI reste disponible pour les opérations techniques :</p>
   <pre class="code"># À exécuter à la racine du projet applicatif (SSH ou terminal local)
 php artisan v02:import registre.csv --tenant=1 --dry-run   # simulation
 php artisan v02:import registre.csv --tenant=1             # exécution</pre>
-  <p>Le rapport affiche : nombre de documents créés, référentiels créés, erreurs ligne par ligne
-  (doublons, statuts invalides, colonnes manquantes rejetés sans création).</p>
+  <p>Les deux parcours acceptent les colonnes actuelles ; les anciens CSV sont conservés si leur propre en-tête est respecté.</p>
 
   <h3>4.3 Contrôles qualité avant import (recommandés)</h3>
   <ul class="checklist">
@@ -476,8 +482,9 @@ php artisan v02:import registre.csv --tenant=1             # exécution</pre>
   <div class="dangerbox"><strong>Document invisible dans « Mes documents » :</strong> vérifier le
   statut (approuvé/applicable), la version active et les dimensions de l'utilisateur
   (poste, département, site…) ou son rôle de propriétaire/vérificateur/approbateur.</div>
-  <div class="dangerbox"><strong>Import rejeté :</strong> vérifier le nombre de colonnes (13),
-  les codes uniques et les statuts (7 valeurs autorisées).</div>
+  <div class="dangerbox"><strong>Import rejeté :</strong> vérifier le nombre de colonnes (16),
+  les codes uniques et les statuts (7 valeurs autorisées). Un CSV enregistré par Excel en ANSI est
+  converti automatiquement ; le format .xls (ancien) doit être réenregistré en .xlsx ou CSV.</div>
   <div class="note"><strong>Règle de travail :</strong> toute évolution non prévue au cahier des
   charges doit être tracée dans <code>docs/evolutions-cahier-des-charges.md</code>.</div>
 </div>
@@ -486,7 +493,7 @@ php artisan v02:import registre.csv --tenant=1             # exécution</pre>
 
 <footer>
   Procédure générée pour la plateforme Open-CoolGed (ex-Kaeged) — Périmètre GED documentaire opérationnelle V02 ·
-  Source : spec/spec-v02.md
+  Source : spécification V02 client (document conservé hors du dépôt applicatif)
 </footer>
 
 </body>

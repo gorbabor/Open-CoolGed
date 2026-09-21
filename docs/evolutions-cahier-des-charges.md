@@ -4,7 +4,7 @@
 > Dernière synchro : 2026-09-21.
 
 Ce document trace **toutes les évolutions implémentées qui n'étaient pas prévues**
-dans le cahier des charges client (document non hébergé dans le dépôt, daté du 12/08/2026).
+dans le cahier des charges client (document conservé hors du dépôt applicatif, daté du 12/08/2026).
 Il doit être **mis à jour à chaque itération** (règle de travail permanente).
 
 ## Écarts implémentés
