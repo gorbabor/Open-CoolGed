@@ -72,4 +72,14 @@ return [
     'mysql_path' => env('GED_MYSQL_PATH', 'mysql'),
 
     'pagination' => 20,
+
+    /*
+    | Assistant d'installation web : verrou posé après une installation réussie
+    | (l'assistant devient inaccessible) et chemin du fichier .env à écrire.
+    | « installer_detect_existing » protège les instances déjà migrées : même sans
+    | verrou, l'assistant est désactivé dès que les tables applicatives existent.
+    */
+    'installed_lock' => env('GED_INSTALLED_LOCK', storage_path('app/installed.lock')),
+    'env_path' => env('GED_ENV_PATH', base_path('.env')),
+    'installer_detect_existing' => env('GED_INSTALLER_DETECT_EXISTING', true),
 ];

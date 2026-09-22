@@ -7,7 +7,7 @@
     <div>
         <h4 class="mb-0">{{ $document->title }}</h4>
         <div class="text-muted small">
-            {{ $document->space->name ?? '—' }}@if ($document->folder) / {{ $document->folder->name }}@endif ·
+            {{ $document->space->name ?? '—' }}@if ($document->folder) / {{ $document->folder->pathLabel() }}@endif ·
             {{ $document->type->name ?? 'Sans type' }} · statut <span class="badge bg-info">{{ $document->statusLabel() }}</span>
             @if ($document->isArchived())<span class="badge bg-secondary">archivé</span>@endif
         </div>
@@ -168,7 +168,7 @@
                     <select name="folder_id" id="metaFolder" class="form-select form-select-sm">
                         <option value="">— Aucun —</option>
                         @foreach ($folders as $f)
-                            <option value="{{ $f->id }}" data-space="{{ $f->space_id }}" @selected($document->folder_id === $f->id)>{{ $f->name }}</option>
+                            <option value="{{ $f->id }}" data-space="{{ $f->space_id }}" @selected($document->folder_id === $f->id)>{{ str_repeat('— ', $f->depth() - 1) }}{{ $f->name }}</option>
                         @endforeach
                     </select></div>
                 <div class="col-md-4 mb-2"><label class="form-label small">Type documentaire</label>

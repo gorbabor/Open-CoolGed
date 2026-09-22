@@ -5,6 +5,7 @@ use App\Http\Controllers\AiController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\InstallController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OfficeController;
 use App\Http\Controllers\ProfileController;
@@ -16,7 +17,28 @@ use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\V02Controller;
 use App\Http\Controllers\WorkflowController;
+use App\Http\Middleware\EnsureNotInstalled;
+use App\Http\Middleware\InstallMode;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
+
+// Assistant d'installation web — accessible uniquement tant que l'application n'est pas installée.
+// Groupe dédié (sans 'web') : session sur fichier, aucune dépendance à la base de données.
+Route::middleware([
+    InstallMode::class,
+    StartSession::class,
+    ShareErrorsFromSession::class,
+    ValidateCsrfToken::class,
+    EnsureNotInstalled::class,
+])->group(function () {
+    Route::get('/install', [InstallController::class, 'show'])->name('install.show');
+    Route::post('/install/test', [InstallController::class, 'testConnection'])->name('install.test');
+    Route::post('/install', [InstallController::class, 'run'])->name('install.run');
+});
+
+Route::get('/install/done', [InstallController::class, 'done'])->name('install.done');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');

@@ -29,23 +29,27 @@
                     @if ($space->description)<p class="small text-muted">{{ $space->description }}</p>@endif
 
                     <ul class="list-unstyled small mb-2">
-                        @foreach ($space->folders as $folder)
-                            <li class="d-flex justify-content-between py-1 border-bottom">
-                                <span><i class="bi bi-folder"></i> {{ $folder->name }}
-                                    <span class="text-muted">({{ $folder->documents_count }} doc.)</span></span>
-                                @if ($canManage)
-                                <form method="POST" action="{{ route('folders.delete', $folder) }}">@csrf @method('DELETE')
-                                    <button class="btn btn-sm btn-link text-danger p-0" title="Supprimer">✕</button>
-                                </form>
-                                @endif
-                            </li>
-                        @endforeach
+                        @include('spaces._tree', [
+                            'nodes' => $roots[$space->id] ?? collect(),
+                            'tree' => $tree,
+                            'space' => $space,
+                            'maxDepth' => $maxDepth,
+                            'canManage' => $canManage,
+                        ])
                     </ul>
 
                     @if ($canManage)
                     <form method="POST" action="{{ route('folders.store', $space) }}" class="d-flex gap-2">
                         @csrf
                         <input type="text" name="name" class="form-control form-control-sm" placeholder="Nouveau dossier" required>
+                        <select name="parent_id" class="form-select form-select-sm" style="max-width:180px">
+                            <option value="">— Racine —</option>
+                            @foreach (($spaceFolders[$space->id] ?? collect()) as $candidate)
+                                @if ($candidate->depth() < $maxDepth)
+                                <option value="{{ $candidate->id }}">{{ str_repeat('— ', $candidate->depth() - 1) }}{{ $candidate->name }}</option>
+                                @endif
+                            @endforeach
+                        </select>
                         <button class="btn btn-sm btn-outline-primary">Ajouter</button>
                     </form>
                     @endif

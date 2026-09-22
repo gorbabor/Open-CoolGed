@@ -22,16 +22,28 @@ class SpaceController extends Controller
         }
     }
 
+    public const MAX_FOLDER_DEPTH = 5;
+
     public function index()
     {
         $spaces = Space::where('is_personal', false)
             ->withCount('documents')
-            ->with(['folders.documents'])
             ->orderBy('name')
             ->get();
 
+        $folders = Folder::withCount('documents')->orderBy('name')->get();
+        $tree = $folders->groupBy(fn (Folder $folder) => $folder->parent_id ?? 0);
+        $roots = $folders->whereNull('parent_id')->groupBy('space_id');
+        $spaceFolders = $folders->groupBy('space_id')->map(
+            fn ($items) => $items->sortBy(fn (Folder $folder) => $folder->pathLabel())->values()
+        );
+
         return view('spaces.index', [
             'spaces' => $spaces,
+            'tree' => $tree,
+            'roots' => $roots,
+            'spaceFolders' => $spaceFolders,
+            'maxDepth' => self::MAX_FOLDER_DEPTH,
             'canManage' => $this->permissions->can(auth()->user(), 'admin.spaces'),
         ]);
     }
@@ -69,14 +81,25 @@ class SpaceController extends Controller
             'parent_id' => ['nullable', 'exists:folders,id'],
         ]);
 
+        $parent = null;
+        if (! empty($data['parent_id'])) {
+            $parent = Folder::find($data['parent_id']);
+            if (! $parent || $parent->space_id !== $space->id) {
+                return back()->withErrors(['parent_id' => 'Le dossier parent doit appartenir au même espace.']);
+            }
+            if ($parent->depth() >= self::MAX_FOLDER_DEPTH) {
+                return back()->withErrors(['parent_id' => 'Profondeur maximale de '.self::MAX_FOLDER_DEPTH.' niveaux atteinte.']);
+            }
+        }
+
         $folder = Folder::create([
             'tenant_id' => auth()->user()->tenant_id,
             'space_id' => $space->id,
-            'parent_id' => $data['parent_id'] ?? null,
+            'parent_id' => $parent?->id,
             'name' => $data['name'],
         ]);
 
-        $this->audit->log('folder.created', 'folder', $folder->id);
+        $this->audit->log('folder.created', 'folder', $folder->id, ['parent_id' => $folder->parent_id]);
 
         return back()->with('success', 'Dossier créé.');
     }

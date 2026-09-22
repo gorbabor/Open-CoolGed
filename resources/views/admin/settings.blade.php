@@ -16,6 +16,7 @@
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-workflows">Workflows</a></li>
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-branding">Branding</a></li>
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-mail">Messagerie</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-menu">Menus</a></li>
 </ul>
 
 @php
@@ -328,6 +329,38 @@
                     <span class="small text-muted">Envoie un email de test à votre adresse ({{ auth()->user()->email }}).</span>
                 </div>
             </div>
+        </div>
+
+        <div class="tab-pane fade" id="tab-menu" role="tabpanel">
+            <h6 class="mb-2">Libellés et ordre des menus (navigation latérale)</h6>
+            <p class="small text-muted">
+                Personnalisez le nom affiché de chaque entrée de menu et son ordre d'apparition pour tous les
+                utilisateurs de l'organisation. Un libellé vide utilise le libellé par défaut (traduit FR/EN).
+                Le groupe « Administration » reste toujours affiché en dernier.
+            </p>
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr><th>Menu</th><th style="width:45%">Libellé personnalisé</th><th style="width:110px">Ordre</th></tr>
+                </thead>
+                <tbody>
+                    @foreach ($menuItems as $key => $item)
+                    <tr>
+                        <td><i class="bi {{ $item['icon'] }}"></i> {{ $item['custom'] ? $item['label'] : __($item['label']) }} <code class="small text-muted">{{ $key }}</code></td>
+                        <td><input type="text" name="menu_labels[{{ $key }}]" value="{{ $item['custom'] ? $item['label'] : '' }}" maxlength="50" class="form-control form-control-sm" placeholder="{{ __($item['label']) }}"></td>
+                        <td><input type="number" name="menu_order[{{ $key }}]" value="{{ $loop->iteration }}" min="1" max="99" class="form-control form-control-sm"></td>
+                    </tr>
+                    @endforeach
+                    <tr>
+                        <td><i class="bi bi-gear"></i> Groupe Administration <code class="small text-muted">administration</code></td>
+                        <td><input type="text" name="menu_labels[administration]" value="{{ $menuAdminLabel === 'Administration' ? '' : $menuAdminLabel }}" maxlength="50" class="form-control form-control-sm" placeholder="Administration"></td>
+                        <td class="small text-muted">toujours en dernier</td>
+                    </tr>
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-sm btn-outline-secondary"
+                    onclick="document.querySelectorAll('#tab-menu input[type=text]').forEach(function (i) { i.value = ''; });">
+                Réinitialiser les libellés
+            </button>
         </div>
 
         <div class="mt-3">

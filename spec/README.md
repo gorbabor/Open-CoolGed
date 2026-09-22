@@ -10,6 +10,7 @@
 | `procedure-installation-cpanel.html` | Procédure d'installation cPanel | CDG §39 « Contraintes cPanel » |
 | `procedure-parametrage-v02.html` | Procédure de paramétrage du périmètre V02 | Dérivé de la spécification V02 client (non hébergée dans le dépôt) |
 | `processus-ajout-documents.html` | Processus d'ajout de documents (Section → Lot → Document + qualification transversale) | Dérivé de la spécification V02 client (non hébergée dans le dépôt) |
+| `profils-acces.html` | Fiche des types d'utilisateurs, menus et capacités par rôle + points de vigilance | Écart n°35 (docs/evolutions-cahier-des-charges.md) |
 | `restreindre-acces-espaces.html` | Guide : restreindre la visibilité d'un espace partagé à une partie des utilisateurs (refus explicites scopés par espace) | RBAC scopé (écart n°35) |
 
 > **Documents client** : le cahier des charges (Word) et la spécification V02 transmise
@@ -30,7 +31,7 @@
 - `-v02` suffixe = document relatif au **périmètre V02** (même sans suffixe, les autres
   documents dérivent de la même spécification).
 - Les guides HTML sont **autonomes** (ouvrables directement dans un navigateur, sans serveur).
-- **Guides HTML — copies de publication** : les 5 guides de `spec/` sont des copies
+- **Guides HTML — copies de publication** : les 6 guides de `spec/` sont des copies
   **byte-identiques** des guides du dépôt de documentation (référence) — toute évolution doit
   être reportée des deux côtés. **Documents client** (cahier des charges, spécification V02) :
   non hébergés ici — conservés hors du dépôt applicatif.

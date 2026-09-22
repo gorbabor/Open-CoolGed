@@ -190,6 +190,11 @@ class DocumentController extends Controller
             'documents' => $documents,
             'canCreate' => $this->permissions->can($user, 'documents.create'),
             'spaces' => $this->spaceOptions($user),
+            'folders' => Folder::whereIn('space_id', $this->permissions->viewableSpaceIds($user))
+                ->orderBy('name')
+                ->get()
+                ->sortBy(fn (Folder $folder) => $folder->pathLabel())
+                ->values(),
             'types' => DocumentType::orderBy('name')->get(),
             'definitions' => $definitions,
             'selectedCols' => $selectedCols,

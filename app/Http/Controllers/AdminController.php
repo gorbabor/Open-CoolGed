@@ -20,6 +20,7 @@ use App\Services\AuditService;
 use App\Services\BackupService;
 use App\Services\DocumentService;
 use App\Services\MailSettingsService;
+use App\Services\MenuService;
 use App\Services\PermissionService;
 use App\Services\PersonalSpaceService;
 use App\Services\QuotaService;
@@ -614,6 +615,8 @@ class AdminController extends Controller
             'storageUsedMb' => $this->storage->tenantStorageMb(auth()->user()->tenant),
             'mimeChoices' => DocumentService::DEFAULT_ALLOWED_MIMES,
             'workflowChoices' => Workflow::orderBy('name')->get(['id', 'name']),
+            'menuItems' => app(MenuService::class)->items(auth()->user()->tenant),
+            'menuAdminLabel' => app(MenuService::class)->adminLabel(auth()->user()->tenant),
             'contentCounts' => [
                 'documents' => Document::withoutGlobalScopes()->where('tenant_id', auth()->user()->tenant_id)->count(),
                 'spaces' => Space::withoutGlobalScopes()->where('tenant_id', auth()->user()->tenant_id)->where('is_personal', false)->count(),
@@ -736,6 +739,33 @@ class AdminController extends Controller
             // Workflows
             'default_workflow_type' => $request->filled('default_workflow_type') ? (int) $request->input('default_workflow_type') : null,
         ]);
+
+        // Menus : libellés personnalisés et ordre d'affichage de la sidebar (tenant).
+        if ($request->has('menu_labels') || $request->has('menu_order')) {
+            $labels = [];
+            foreach ((array) $request->input('menu_labels', []) as $key => $label) {
+                if (! in_array($key, MenuService::validKeys(), true) && $key !== MenuService::ADMIN_KEY) {
+                    continue;
+                }
+                $label = trim(mb_substr((string) $label, 0, 50));
+                if ($label !== '') {
+                    $labels[$key] = $label;
+                }
+            }
+
+            $positions = [];
+            foreach ((array) $request->input('menu_order', []) as $key => $position) {
+                if (in_array($key, MenuService::validKeys(), true)) {
+                    $positions[$key] = max(1, min(99, (int) $position));
+                }
+            }
+            asort($positions);
+
+            $settings->set(['menu' => [
+                'labels' => $labels,
+                'order' => array_values(array_keys($positions)),
+            ]]);
+        }
 
         $this->audit->log('admin.settings.updated', 'tenant', $tenant->id, $tenant->getChanges());
 

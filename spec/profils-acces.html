@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Profils, menus et permissions — Open-CoolGed (ex-Kaeged GED)</title>
+<style>
+  body{font-family:Segoe UI,Arial,sans-serif;margin:2rem auto;max-width:1100px;color:#1f2937;background:#f8fafc;line-height:1.5}
+  h1{border-bottom:3px solid #2563eb;padding-bottom:.4rem} h2{color:#1e3a8a;margin-top:2rem}
+  table{border-collapse:collapse;width:100%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.08);margin:1rem 0;font-size:.92rem}
+  th,td{border:1px solid #dbe3ee;padding:.5rem .7rem;text-align:left;vertical-align:top}
+  th{background:#2563eb;color:#fff}
+  tr:nth-child(even) td{background:#f1f5fb}
+  .ok{color:#15803d;font-weight:600} .no{color:#b91c1c;font-weight:600}
+  .role{border-left:4px solid #2563eb}
+  .warning{background:#fffbeb;border:1px solid #f59e0b;border-radius:6px;padding:.8rem 1rem}
+  .info{background:#eff6ff;border:1px solid #2563eb;border-radius:6px;padding:.8rem 1rem}
+  code{background:#eef2f7;padding:.1rem .4rem;border-radius:4px;font-size:.85em}
+  ul{margin:.3rem 0}
+</style>
+</head>
+<body>
+<h1>Open-CoolGed (ex-Kaeged GED) — Types d'utilisateurs, menus &amp; capacités</h1>
+<p><em>État au 04/09/2026 — basé sur les rôles système (<code>tenant_admin</code>, <code>manager</code>, <code>user</code>, <code>auditor</code>, <code>validator</code>), les rôles hérités des groupes, et le statut super administrateur de plateforme. Un compte = une organisation (tenant). Correctifs de peaufinage des accès appliqués le 04/09/2026 (écarts n°35-36).</em></p>
+
+<h2>1. Les types d'utilisateurs</h2>
+<table>
+<tr><th style="width:22%">Profil</th><th>Identité technique</th><th>Rôle dans l'application</th></tr>
+<tr><td><b>Super Admin plateforme</b></td><td><code>is_super_admin = true</code> — global, hors organisation</td><td>Gère toute la plateforme : organisations (tenants), autres super admins, paramètres par défaut (IA, thèmes, quotas). Ne consulte pas les documents des organisations.</td></tr>
+<tr><td><b>Administrateur d'organisation</b></td><td>Rôle système <code>tenant_admin</code></td><td>Administre son organisation : utilisateurs, groupes, rôles &amp; permissions, types &amp; métadonnées, référentiels, import CSV, audit, paramètres, quotas, IA, <b>espaces et dossiers</b>. Toutes les actions documentaires, workflows et IA.</td></tr>
+<tr><td><b>Manager</b></td><td>Rôle système <code>manager</code></td><td>Pilote les documents (crée, édite, archive, métadonnées, partage) et valide/approuve/rejette les étapes de workflow. Pas de suppression, pas d'administration, pas de gestion des espaces.</td></tr>
+<tr><td><b>Utilisateur</b></td><td>Rôle système <code>user</code></td><td>Collaborateur standard : consulte, télécharge, crée, édite, commente, partage des documents. Pas de suppression, archivage, métadonnées, workflow, IA ni gestion des espaces.</td></tr>
+<tr><td><b>Validateur</b></td><td>Rôle système <code>validator</code></td><td>Consulte et télécharge, et traite les tâches de workflow (valider/approuver/rejeter) qui lui sont affectées. Ne crée ni n'édite pas de documents.</td></tr>
+<tr><td><b>Auditeur</b></td><td>Rôle système <code>auditor</code></td><td>Lecture seule des documents (aperçu) et consultation du journal d'audit. <b>Ne télécharge pas</b> (choix assumé, voir §5), ne crée rien, ne gère pas les espaces.</td></tr>
+<tr><td><b>Invité externe</b></td><td>Sans compte — lien <code>/share/{token}</code></td><td>Accès à un document partagé par lien (option mot de passe, expiration), aperçu et téléchargement uniquement. Aucun menu.</td></tr>
+</table>
+<p><b>Règles transverses :</b> un utilisateur combine son rôle direct et les rôles de ses groupes. Les comptes peuvent être <i>actifs</i> ou <i>suspendus</i> ; une organisation suspendue bloque toute connexion. Le statut « super admin » prime sur tout (passe-partout), sauf l'appartenance à un tenant.</p>
+
+<h2>2. Menus accessibles par profil</h2>
+<table>
+<tr><th>Menu / écran</th><th>Super Admin</th><th>Admin org.</th><th>Manager</th><th>Utilisateur</th><th>Validateur</th><th>Auditeur</th></tr>
+<tr><td>Tenants / Super admins / Paramètres plateforme (<code>/superadmin/*</code>)</td><td class="ok">Oui</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+<tr><td>Tableau de bord (redirige le super admin vers Tenants)</td><td class="no">Redirigé</td><td colspan="5" class="ok" style="text-align:center">Commun à tout membre actif d'une organisation</td></tr>
+<tr><td>Documents (liste partagée)</td><td>—</td><td colspan="5" class="ok">Commun (contenu filtré : documents visibles par permission ou partage)</td></tr>
+<tr><td>Mes documents personnels (espace privé)</td><td>—</td><td colspan="5" class="ok">Commun — espace personnel propre à chacun ; visible par le propriétaire, supervision par l'admin (option)</td></tr>
+<tr><td>Mes documents (V02 : documents applicables à mon poste/entité)</td><td>—</td><td colspan="5" class="ok">Commun</td></tr>
+<tr><td>Espaces / dossiers</td><td>—</td><td colspan="5" class="ok">Commun en <b>lecture</b> (voir §5 : gestion réservée à l'admin)</td></tr>
+<tr><td>Recherche</td><td>—</td><td colspan="5" class="ok">Commun</td></tr>
+<tr><td>Workflows (modèles)</td><td>—</td><td colspan="5" class="ok">Commun (écran liste ; décisions gardées)</td></tr>
+<tr><td>Mes tâches (workflow)</td><td>—</td><td colspan="5" class="ok">Commun — contenu = tâches qui me sont affectées/déléguées</td></tr>
+<tr><td>Notifications</td><td>—</td><td colspan="5" class="ok">Commun</td></tr>
+<tr><td>Administration &gt; Utilisateurs (<code>admin.users</code>)</td><td class="no">—</td><td class="ok">Oui</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+<tr><td>Administration &gt; Groupes (<code>admin.groups</code>)</td><td class="no">—</td><td class="ok">Oui</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+<tr><td>Administration &gt; Rôles &amp; permissions (<code>admin.roles</code>)</td><td class="no">—</td><td class="ok">Oui</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+<tr><td>Administration &gt; Types &amp; métadonnées (<code>admin.types</code>)</td><td class="no">—</td><td class="ok">Oui</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+<tr><td>Administration &gt; Référentiels + Import CSV/Excel (<code>admin.referentials</code>)</td><td class="no">—</td><td class="ok">Oui</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+<tr><td>Administration &gt; Audit (<code>admin.audit</code>)</td><td class="no">—</td><td class="ok">Oui</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="ok">Oui (lecture)</td></tr>
+<tr><td>Administration &gt; Paramètres (<code>admin.settings</code>)</td><td class="no">—</td><td class="ok">Oui</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+<tr><td>Historique IA (<code>/admin/ai</code>, permission <code>ai.admin</code>)</td><td class="no">—</td><td class="ok">Oui</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+<tr><td>Profil (langue, thème, MFA, mot de passe) — topbar</td><td colspan="6" class="ok" style="text-align:center">Tous les profils connectés</td></tr>
+</table>
+
+<h2>3. Capacités documentaires et workflows par rôle</h2>
+<table>
+<tr><th>Capacité (permission)</th><th>Admin org.</th><th>Manager</th><th>Utilisateur</th><th>Validateur</th><th>Auditeur</th></tr>
+<tr><td>Voir / ouvrir la fiche d'un document <code>documents.view</code></td><td class="ok">Oui</td><td class="ok">Oui</td><td class="ok">Oui</td><td class="ok">Oui</td><td class="ok">Oui</td></tr>
+<tr><td>Aperçu <code>documents.preview</code> (incl. visionneuse Office)</td><td class="ok">Oui</td><td class="ok">Oui</td><td class="ok">Oui</td><td class="ok">Oui</td><td class="ok">Oui</td></tr>
+<tr><td>Télécharger <code>documents.download</code></td><td class="ok">Oui</td><td class="ok">Oui</td><td class="ok">Oui</td><td class="ok">Oui</td><td class="no">Non</td></tr>
+<tr><td>Créer / importer <code>documents.create</code></td><td class="ok">Oui</td><td class="ok">Oui</td><td class="ok">Oui</td><td class="no">Non</td><td class="no">Non</td></tr>
+<tr><td>Éditer / nouvelle version <code>documents.edit</code></td><td class="ok">Oui</td><td class="ok">Oui</td><td class="ok">Oui</td><td class="no">Non</td><td class="no">Non</td></tr>
+<tr><td>Métadonnées (titre, espace, confid., cycle V02) <code>documents.metadata</code></td><td class="ok">Oui</td><td class="ok">Oui</td><td class="no">Non</td><td class="no">Non</td><td class="no">Non</td></tr>
+<tr><td>Commenter <code>documents.comment</code></td><td class="ok">Oui</td><td class="ok">Oui</td><td class="ok">Oui</td><td class="no">Non</td><td class="no">Non</td></tr>
+<tr><td>Partager (utilisateur/groupe/lien externe) <code>documents.share</code></td><td class="ok">Oui</td><td class="ok">Oui</td><td class="ok">Oui</td><td class="no">Non</td><td class="no">Non</td></tr>
+<tr><td>Mettre en corbeille / supprimer <code>documents.delete</code></td><td class="ok">Oui</td><td class="no">Non</td><td class="no">Non</td><td class="no">Non</td><td class="no">Non</td></tr>
+<tr><td>Restaurer <code>documents.restore</code></td><td class="ok">Oui</td><td class="no">Non</td><td class="no">Non</td><td class="no">Non</td><td class="no">Non</td></tr>
+<tr><td>Archiver / désarchiver <code>documents.archive</code></td><td class="ok">Oui</td><td class="ok">Oui</td><td class="no">Non</td><td class="no">Non</td><td class="no">Non</td></tr>
+<tr><td>Créer / renommer / supprimer espaces et dossiers <code>admin.spaces</code></td><td class="ok">Oui</td><td class="no">Non</td><td class="no">Non</td><td class="no">Non</td><td class="no">Non</td></tr>
+<tr><td>Lancer un workflow sur un document</td><td class="ok">Oui</td><td class="ok">Oui</td><td class="ok">Oui*</td><td class="ok">Oui*</td><td class="ok">Oui*</td></tr>
+<tr><td>Décider sur une tâche affectée (approuver <code>workflow.approve</code> / rejeter <code>workflow.reject</code>)</td><td class="ok">Oui</td><td class="ok">Oui</td><td class="no">Non</td><td class="ok">Oui</td><td class="no">Non</td></tr>
+<tr><td>Accuser réception (V02, doc applicable)</td><td class="ok">Oui</td><td class="ok">Oui</td><td class="ok">Oui</td><td class="ok">Oui</td><td class="ok">Oui</td></tr>
+<tr><td>Gérer les modèles de workflow <code>workflow.manage</code></td><td class="ok">Oui</td><td class="no">Non</td><td class="no">Non</td><td class="no">Non</td><td class="no">Non</td></tr>
+<tr><td>Utiliser l'IA sur un document <code>ai.use</code></td><td class="ok">Oui</td><td class="ok">Oui</td><td class="no">Non</td><td class="no">Non</td><td class="no">Non</td></tr>
+<tr><td>Admin IA (paramètres fournisseurs <code>ai.admin</code> + historique <code>/admin/ai</code>)</td><td class="ok">Oui</td><td class="no">Non</td><td class="no">Non</td><td class="no">Non</td><td class="no">Non</td></tr>
+</table>
+<p><small>*&nbsp;Aucune permission <code>workflow.start</code> n'existe : techniquement tout membre connecté peut déclencher un workflow actif sur un document accessible (point restant, voir §5).</small></p>
+
+<h2>4. Particularités importantes</h2>
+<ul>
+<li><b>Espaces personnels :</b> le propriétaire a tous les droits sur son espace ; l'admin d'organisation n'y accède que si le paramètre <code>personal_spaces_admin_access</code> est activé (et avec <code>admin.users</code>). Publication d'un document personnel vers un espace partagé : possible par le propriétaire (<code>documents.publish</code>), sous réserve d'accès à l'espace cible.</li>
+<li><b>Portée des permissions :</b> l'admin peut restreindre une permission à un espace/dossier/document précis ou créer un rôle « métier » dédié ; un refus explicite n'est jamais contourné.</li>
+<li><b>Cycles de vie :</b> un document verrouillé (statut approuvé/figé) ne se modifie qu'en créant une nouvelle révision ; l'édition/version exige <code>documents.edit</code>, la fiche masque les boutons non permis (canDownload/canEdit/canShare/canComment/canAi/canDelete).</li>
+<li><b>Groupes :</b> véhicules de diffusion et d'héritage de rôles (un groupe peut porter des rôles pour ses membres) — gérés par l'admin (menu Groupes).</li>
+<li><b>Import CSV/Excel V02 :</b> réservé <code>admin.referentials</code> (téléchargement des modèles inclus).</li>
+<li><b>Rôles système</b> : non supprimables ni renommables (badge « système ») ; modifiables en les dupliquant.</li>
+</ul>
+
+<h2>5. Points de vigilance — état après peaufinage (écarts n°35-36, 04/09/2026)</h2>
+<div class="info">
+<p><b>Traités le 04/09/2026</b> (décision : correctifs UI recommandés — auditeur inchangé) :</p>
+<ul>
+<li><b>« Importer » / « Nouveau document » masqués</b> pour les profils sans <code>documents.create</code> (liste Documents + tableau de bord) et page de création en 403 (validateur, auditeur).</li>
+<li><b>Espaces et dossiers (partagés) :</b> nouvelle permission <code>admin.spaces</code> (rôle <code>tenant_admin</code>) — création/renommage/suppression refusés (403) aux autres rôles ; l'écran Espaces reste consultable par tous mais les commandes de gestion sont masquées aux non-admins. Après déploiement, exécuter <code>php artisan roles:sync</code> pour l'attribuer aux tenants existants.</li>
+<li><b>Espaces personnels exclus de l'écran Espaces</b> (liste et commandes : uniquement les espaces partagés y figurent, comme dans la liste Documents) et <b>protégés</b> : renommage/suppression refusés (403 « Espace personnel géré automatiquement »), même pour l'admin — cycle de vie automatique (création à la demande, purge par reset tenant). Consultation exclusivement via « Mes documents personnels ».</li>
+<li><b>Historique IA <code>/admin/ai</code> :</b> réservé à la permission <code>ai.admin</code> (403 pour les autres profils), cohérent avec le rôle <code>tenant_admin</code>.</li>
+<li><b>Auditeur :</b> le téléchargement reste refusé (aperçu + audit seulement) — choix assumé, non modifié.</li>
+<li><b><code>roles:sync</code></b> auto-alimente désormais le registre des permissions (<code>seedPermissions</code>) ; slug mort <code>admin.ai</code> retiré des rôles système.</li>
+</ul>
+</div>
+<div class="warning">
+<p><b>Points restants (non traités, à décider ultérieurement) :</b></p>
+<ul>
+<li>La <b>création/activation de modèles de workflow</b> (<code>POST /workflows</code>, toggle) ne vérifie pas <code>workflow.manage</code> ; seules les décisions sont gardées (affectation + <code>workflow.approve/reject</code>).</li>
+<li>Le <b>lancement d'un workflow</b> sur un document n'est pas soumis à une permission dédiée (aucun slug <code>workflow.start</code>).</li>
+</ul>
+</div>
+
+<h2>6. Restreindre la visibilité d'un espace partagé à une partie des utilisateurs</h2>
+<p>Le moteur RBAC le permet depuis l'interface (Administration → Rôles &amp; permissions) grâce aux <b>portées par espace</b> et aux <b>refus explicites</b> (<code>role_permission.scope_type=space</code> + <code>denied</code>) : le refus scopé sur un espace l'emporte sur l'autorisation globale « tenant » du rôle habituel (chaîne document → dossier → <b>espace</b> → tenant ; deny prioritaire, RM-008).</p>
+
+<h3>Procédure — stratégie « exclusion » (petit groupe à écarter d'un espace)</h3>
+<ol>
+<li><b>Administration → Groupes</b> : créer (ou réutiliser) un groupe, ex. « Exclus Espace RH ».</li>
+<li><b>Administration → Rôles &amp; permissions</b> : créer un rôle non système, ex. « Restriction RH » (dupliquer un rôle puis retirer les droits, ou le laisser vide).</li>
+<li>Dans l'édition du rôle, pour chaque permission à refuser sur l'espace : <code>documents.view</code>, <code>documents.preview</code>, <code>documents.download</code> (et éventuellement <code>documents.comment</code>/<code>documents.share</code>) → <b>Portée = Espace</b>, <b>scope = « Espace : RH »</b>, case <b>Refus explicite</b> cochée.</li>
+<li><b>Enregistrer les permissions</b>, puis <b>Administration → Groupes → Rôles du groupe</b> : attacher ce rôle au groupe d'exclusion.</li>
+<li><b>Administration → Utilisateurs</b> : ajouter les personnes au groupe (rôle habituel + rôle de groupe → le refus scopé gagne).</li>
+</ol>
+<p><b>Effet attendu</b> : dans <b>Documents</b>, ces personnes ne voient plus aucun document de l'espace ciblé (ni fiche, ni aperçu, ni téléchargement) ; les autres espaces restent inchangés ; les autres utilisateurs voient tout normalement. Un refus explicite ne peut être contourné, même par un partage ciblé ; l'admin tenant et le super admin gardent la supervision.</p>
+
+<h3>Variante « audience » (si la majorité ne doit PAS voir)</h3>
+<p>L'inverse est plus lourd : rôles métier sans vue « tenant », autorisations <code>documents.view</code> <b>autorisées</b> (deny décoché) scopées sur les seuls espaces autorisés, et absence du rôle « user » global pour ces comptes. À réserver aux organisations qui démarrent avec des rôles étroits.</p>
+
+<h3>Limites actuelles</h3>
+<ul>
+<li>Le sélecteur de portée de l'UI ne propose qu'un choix par <b>espace</b> (ou « — (tous) » = tenant) — les portées <b>dossier/document</b> existent dans le modèle mais ne sont pas sélectionnables dans l'interface ; pour un document unique, utiliser le partage ciblé (positif) ou une portée gérée en base.</li>
+<li>La confidentialité (public/interne/confidentiel/secret) est un attribut de qualification et de filtre, <b>pas</b> un verrou d'accès : c'est le RBAC qui fait foi.</li>
+<li>Une même permission ne porte qu'<b>un</b> refus par rôle et par espace ; pour cumuler les exclusions (RH <i>et</i> Finances), multiplier les groupes/rôles.</li>
+<li>Les espaces personnels ne sont pas concernés (isolation propriétaire, §4).</li>
+</ul>
+
+<p><em>Généré depuis le code : <code>app/Services/SystemRoleService.php</code>, <code>app/Services/PermissionService.php</code>, <code>routes/web.php</code>, contrôleurs et layout <code>app.blade.php</code>.</em></p>
+</body>
+</html>

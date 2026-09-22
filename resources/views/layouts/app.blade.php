@@ -128,24 +128,37 @@
                         {{ $brandLogo ? '' : app_display_name() }}
                     </div>
                     <ul class="nav flex-column">
-                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><i class="bi bi-speedometer2"></i> {{ __('Tableau de bord') }}</a></li>
-                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('documents.*') && !request('personal') ? 'active' : '' }}" href="{{ route('documents.index') }}"><i class="bi bi-files"></i> {{ __('Documents') }}</a></li>
-                        <li class="nav-item"><a class="nav-link {{ request('personal') ? 'active' : '' }}" href="{{ route('documents.index', ['personal' => 1]) }}"><i class="bi bi-person-lock"></i> Mes documents personnels</a></li>
-                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('v02.my-documents') ? 'active' : '' }}" href="{{ route('v02.my-documents') }}"><i class="bi bi-briefcase"></i> {{ __('Mes documents') }}</a></li>
-                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('spaces.*') ? 'active' : '' }}" href="{{ route('spaces.index') }}"><i class="bi bi-collection"></i> {{ __('Espaces') }}</a></li>
-                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('search') ? 'active' : '' }}" href="{{ route('search') }}"><i class="bi bi-search"></i> {{ __('Recherche') }}</a></li>
-                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('workflows.*') ? 'active' : '' }}" href="{{ route('workflows.index') }}"><i class="bi bi-diagram-3"></i> {{ __('Workflows') }}</a></li>
-                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('tasks.*') ? 'active' : '' }}" href="{{ route('tasks.index') }}"><i class="bi bi-check2-square"></i> {{ __('Mes tâches') }}</a></li>
-                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}" href="{{ route('notifications.index') }}"><i class="bi bi-bell"></i> {{ __('Notifications') }}
+                        @php
+                            $menuService = app(\App\Services\MenuService::class);
+                            $menuTenant = auth()->user()->isSuperAdmin() ? null : auth()->user()->tenant;
+                            $menuItems = $menuService->items($menuTenant);
+                            $adminMenuLabel = $menuService->adminLabel($menuTenant);
+                            $menuActive = [
+                                'dashboard' => request()->routeIs('dashboard'),
+                                'documents' => request()->routeIs('documents.*') && ! request('personal'),
+                                'personal' => (bool) request('personal'),
+                                'v02' => request()->routeIs('v02.my-documents'),
+                                'spaces' => request()->routeIs('spaces.*'),
+                                'search' => request()->routeIs('search'),
+                                'workflows' => request()->routeIs('workflows.*'),
+                                'tasks' => request()->routeIs('tasks.*'),
+                                'notifications' => request()->routeIs('notifications.*'),
+                            ];
+                        @endphp
+                        @foreach ($menuItems as $menuKey => $menuItem)
+                        <li class="nav-item"><a class="nav-link {{ ($menuActive[$menuKey] ?? false) ? 'active' : '' }}" href="{{ route($menuItem['route'], $menuItem['params']) }}"><i class="bi {{ $menuItem['icon'] }}"></i> {{ $menuItem['custom'] ? $menuItem['label'] : __($menuItem['label']) }}
+                            @if ($menuKey === 'notifications')
                             @php $unreadCount = auth()->user()->notifications()->whereNull('read_at')->count(); @endphp
                             @if ($unreadCount > 0)<span class="badge bg-danger rounded-pill ms-1" id="notifBadge">{{ $unreadCount }}</span>@else<span class="badge bg-danger rounded-pill ms-1 d-none" id="notifBadge">0</span>@endif
+                            @endif
                         </a></li>
+                        @endforeach
                         @php $adminActive = request()->routeIs('admin.*'); @endphp
                         @if (count($adminVisible) > 0)
                         <li class="nav-item">
                             <a class="nav-link d-flex justify-content-between align-items-center {{ $adminActive ? 'active' : '' }}"
                                data-bs-toggle="collapse" href="#adminSubmenu" role="button" aria-expanded="{{ $adminActive ? 'true' : 'false' }}" aria-controls="adminSubmenu">
-                                <span><i class="bi bi-gear"></i> Administration</span>
+                                <span><i class="bi bi-gear"></i> {{ $adminMenuLabel }}</span>
                                 <i class="bi bi-chevron-{{ $adminActive ? 'down' : 'right' }} small"></i>
                             </a>
                             <div class="collapse {{ $adminActive ? 'show' : '' }}" id="adminSubmenu">

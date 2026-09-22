@@ -17,9 +17,17 @@
     <div class="row g-2">
         <div class="col-md-3"><input type="text" name="q" value="{{ $filters['q'] ?? '' }}" class="form-control" placeholder="{{ __('Recherche par titre/référence…') }}"></div>
         <div class="col-md-2">
-            <select name="space_id" class="form-select">
+            <select name="space_id" id="spaceFilterSelect" class="form-select">
                 <option value="">{{ __('Espace') }}</option>
                 @foreach ($spaces as $s)<option value="{{ $s->id }}" @selected(($filters['space_id'] ?? '') == $s->id)>{{ $s->name }}</option>@endforeach
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="folder_id" id="folderFilterSelect" class="form-select">
+                <option value="">{{ __('Dossier') }}</option>
+                @foreach ($folders as $f)
+                    <option value="{{ $f->id }}" data-space="{{ $f->space_id }}" @selected(($filters['folder_id'] ?? '') == $f->id)>{{ str_repeat('— ', $f->depth() - 1) }}{{ $f->name }}</option>
+                @endforeach
             </select>
         </div>
         <div class="col-md-2">
@@ -70,6 +78,30 @@
     </div>
     @endif
 </form>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const spaceSelect = document.getElementById('spaceFilterSelect');
+    const folderSelect = document.getElementById('folderFilterSelect');
+    if (!spaceSelect || !folderSelect) return;
+
+    const allOptions = Array.from(folderSelect.options);
+    const filterFolders = function () {
+        const space = spaceSelect.value;
+        const selected = folderSelect.value;
+        folderSelect.innerHTML = '';
+        allOptions[0] = allOptions[0].cloneNode(true);
+        folderSelect.appendChild(allOptions[0]);
+        allOptions.slice(1)
+            .filter(o => !space || o.dataset.space === space)
+            .forEach(o => folderSelect.appendChild(o.cloneNode(true)));
+        if (selected && Array.from(folderSelect.options).some(o => o.value === selected)) {
+            folderSelect.value = selected;
+        }
+    };
+    spaceSelect.addEventListener('change', filterFolders);
+    filterFolders();
+});
+</script>
 
 @if ($viewMode === 'list' && $activeLabel !== null)
 <div class="alert alert-light border d-flex justify-content-between align-items-center py-2 mb-3">

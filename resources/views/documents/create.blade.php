@@ -36,7 +36,7 @@
             <select name="folder_id" id="folderSelect" class="form-select">
                 <option value="">— {{ __('Aucun') }} —</option>
                 @foreach ($folders as $f)
-                    <option value="{{ $f->id }}" data-space="{{ $f->space_id }}" @selected(old('folder_id') == $f->id)>{{ $f->name }}</option>
+                    <option value="{{ $f->id }}" data-space="{{ $f->space_id }}" @selected(old('folder_id') == $f->id)>{{ str_repeat('— ', $f->depth() - 1) }}{{ $f->name }}</option>
                 @endforeach
             </select>
         </div>

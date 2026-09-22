@@ -136,6 +136,16 @@ MySQL/MariaDB, Composer, SSH, cron.
   gérés par l'admin tenant), création de document réservée à `documents.create`
   (boutons masqués + 403), historique IA réservé à `ai.admin`,
   `roles:sync` auto-alimente le registre des permissions
+- Menus personnalisables par tenant : renommage des entrées de la sidebar et
+  ordre d'affichage (Administration → Paramètres → onglet « Menus », libellés
+  vides = défauts traduits, groupe Administration en dernier)
+- Dossiers imbriqués et arborescence : sous-dossiers jusqu'à 5 niveaux
+  (sélecteur parent, validation serveur), écran Espaces en arbre repliable,
+  filtre « Dossier » indenté et chemin complet sur la fiche document
+- Assistant d'installation web : route `/install` (prérequis, base de données
+  avec test de connexion, `.env` + APP_KEY, migrations, comptes initiaux,
+  comptes de démonstration optionnels) puis verrou `storage/installed.lock` ;
+  commande CLI équivalente `app:install`
 - Processus : workflows paramétrables, tâches, délégation, notifications (F-011, 015)
 - Recherche : structurée + plein texte (F-012, 021)
 - Partage interne contrôlé (F-016), audit (F-013), tableaux de bord (F-024)
