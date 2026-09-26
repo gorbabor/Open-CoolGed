@@ -68,6 +68,48 @@
 </div>
 
 <div class="card p-4 mb-3">
+    <h6>Menus affichés</h6>
+    <p class="small text-muted mb-2">Personnalisez votre barre latérale. Un menu masqué par votre organisation ne peut pas être réaffiché.</p>
+    <form method="POST" action="{{ route('profile.menu-prefs') }}" class="row g-3">
+        @csrf
+        <div class="col-md-8">
+            <label class="form-label small">Menus affichés</label>
+            <div class="row">
+                @foreach ($menuItems as $key => $item)
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="menu_visible[{{ $key }}]" value="1" id="menu_visible_{{ $key }}" @checked(! in_array($key, $menuUserHidden, true))>
+                        <label class="form-check-label" for="menu_visible_{{ $key }}">{{ $item['custom'] ? $item['label'] : __($item['label']) }}</label>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+            <div class="form-text">Au moins un menu doit rester affiché.</div>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label small">Menu de démarrage</label>
+            <select name="menu_startup" class="form-select">
+                <option value="">— Selon l'organisation —</option>
+                @foreach ($menuItems as $key => $item)
+                    @if (! in_array($key, $menuUserHidden, true))
+                    <option value="{{ $key }}" @selected(($user->menu_startup ?? '') === $key)>{{ $item['custom'] ? $item['label'] : __($item['label']) }}</option>
+                    @endif
+                @endforeach
+            </select>
+            <div class="form-text">
+                Menu ouvert après la connexion.
+                @if ($menuTenantStartup !== '' && isset($menuItems[$menuTenantStartup]))
+                    Défaut de l'organisation : {{ $menuItems[$menuTenantStartup]['custom'] ? $menuItems[$menuTenantStartup]['label'] : __($menuItems[$menuTenantStartup]['label']) }}.
+                @else
+                    Défaut de l'organisation : tableau de bord.
+                @endif
+            </div>
+        </div>
+        <div class="col-12"><button class="btn btn-primary">Enregistrer</button></div>
+    </form>
+</div>
+
+<div class="card p-4 mb-3">
     <h6>Mot de passe</h6>
     <form method="POST" action="{{ route('profile.update-password') }}" class="row g-2">
         @csrf

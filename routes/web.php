@@ -65,6 +65,7 @@ Route::middleware(['auth', 'tenant.context', 'tenant.active', 'app.locale'])->gr
     Route::post('/profile/theme-mode', [ProfileController::class, 'updateThemeMode'])->name('profile.theme-mode');
     Route::post('/profile/theme', [ProfileController::class, 'updateTheme'])->name('profile.theme');
     Route::post('/profile/locale', [ProfileController::class, 'updateLocale'])->name('profile.locale');
+    Route::post('/profile/menu-prefs', [ProfileController::class, 'updateMenuPreferences'])->name('profile.menu-prefs');
     Route::post('/profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
 
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
@@ -92,6 +93,7 @@ Route::middleware(['auth', 'tenant.context', 'tenant.active', 'app.locale'])->gr
     Route::post('/spaces/{space}/rename', [SpaceController::class, 'renameSpace'])->name('spaces.rename');
     Route::post('/spaces/{space}/folders', [SpaceController::class, 'addFolder'])->name('folders.store');
     Route::post('/folders/{folder}/rename', [SpaceController::class, 'renameFolder'])->name('folders.rename');
+    Route::get('/spaces/folders/{folder}/documents', [SpaceController::class, 'folderDocuments'])->name('folders.documents');
     Route::delete('/folders/{folder}', [SpaceController::class, 'deleteFolder'])->name('folders.delete');
     Route::delete('/spaces/{space}', [SpaceController::class, 'destroy'])->name('spaces.delete');
 

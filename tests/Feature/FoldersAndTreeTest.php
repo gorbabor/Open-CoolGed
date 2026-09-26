@@ -77,9 +77,43 @@ class FoldersAndTreeTest extends TestCase
         $html = $this->get(route('spaces.index'))->assertOk()->getContent();
         $this->assertStringContainsString('Dossier Racine', $html);
         $this->assertStringContainsString('Sous-dossier Enfant', $html);
-        $this->assertStringContainsString('(1 doc.)', $html);
+        $this->assertStringContainsString('1 doc.', $html);
+        $this->assertStringContainsString('folder-count', $html);
         $this->assertTrue(strpos($html, 'Dossier Racine') < strpos($html, 'Sous-dossier Enfant'), 'Imbrication affichée parent avant enfant');
-        $this->assertStringContainsString('border-start', $html);
+        $this->assertStringContainsString('folder-children', $html);
+    }
+
+    public function test_tree_marks_levels_and_collapses_subfolders_by_default(): void
+    {
+        $tenant = $this->makeTenant();
+        $user = $this->makeUser($tenant, 'user');
+        $space = $this->makeSpace($tenant, 'Section');
+        $root = $this->makeSubfolder($tenant, $space, null, 'Dossier Racine');
+        $child = $this->makeSubfolder($tenant, $space, $root, 'Sous-dossier Enfant');
+        $this->makeSubfolder($tenant, $space, null, 'Dossier Vide');
+        $this->makeDocument($tenant, $user, $space, ['title' => 'Doc enfant', 'folder_id' => $child->id]);
+        $this->actingAsUser($user);
+
+        $html = $this->get(route('spaces.index'))->assertOk()->getContent();
+
+        // Hiérarchie visuelle : niveau 1 = icône pleine + nom semi-gras, niveau 2 = icône contour.
+        $this->assertStringContainsString('bi-folder-fill', $html);
+        $this->assertStringContainsString('bi-folder2', $html);
+        $this->assertStringContainsString('folder-toggle fw-semibold', $html);
+        $this->assertStringContainsString('folder-toggle folder-sub', $html);
+
+        // Sous-dossiers repliés par défaut (liste masquée + chevron fermé).
+        $this->assertStringContainsString('folder-children d-none', $html);
+        $this->assertStringContainsString('class="folder-caret"', $html);
+        $this->assertStringContainsString('aria-expanded="false"', $html);
+
+        // Chevron uniquement sur les dossiers parents ; espace réservé pour les feuilles.
+        $this->assertSame(1, substr_count($html, 'class="folder-caret"'));
+        $this->assertSame(2, substr_count($html, 'class="caret-spacer"'));
+
+        // Compteur : pastille affichée seulement si le dossier contient des documents.
+        $this->assertSame(1, substr_count($html, 'class="folder-count"'));
+        $this->assertStringContainsString('>1 doc.</span>', $html);
     }
 
     public function test_delete_folder_is_blocked_when_it_has_children(): void

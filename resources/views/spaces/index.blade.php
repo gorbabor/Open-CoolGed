@@ -28,7 +28,7 @@
                     @endif
                     @if ($space->description)<p class="small text-muted">{{ $space->description }}</p>@endif
 
-                    <ul class="list-unstyled small mb-2">
+                    <ul class="list-unstyled mb-2 space-tree">
                         @include('spaces._tree', [
                             'nodes' => $roots[$space->id] ?? collect(),
                             'tree' => $tree,
@@ -89,4 +89,50 @@
     </div>
 </div>
 @endif
+
+<script>
+document.addEventListener('click', (event) => {
+    const caret = event.target.closest('.folder-caret');
+    if (!caret) return;
+
+    const item = caret.closest('li');
+    const children = item ? item.querySelector(':scope > .folder-children') : null;
+    if (!children) return;
+
+    const collapsed = children.classList.toggle('d-none');
+    caret.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+});
+
+document.addEventListener('click', (event) => {
+    const toggle = event.target.closest('.folder-toggle');
+    if (!toggle) return;
+
+    const item = toggle.closest('li');
+    const panel = item ? item.querySelector('.folder-documents') : null;
+    if (!panel) return;
+
+    if (panel.dataset.loaded === '1') {
+        panel.classList.toggle('d-none');
+        toggle.setAttribute('aria-expanded', panel.classList.contains('d-none') ? 'false' : 'true');
+        return;
+    }
+
+    panel.classList.remove('d-none');
+    panel.innerHTML = '<div class="small text-muted py-1">{{ __('Chargement…') }}</div>';
+    toggle.setAttribute('aria-expanded', 'true');
+
+    fetch(toggle.dataset.url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then((response) => {
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            return response.text();
+        })
+        .then((html) => {
+            panel.innerHTML = html;
+            panel.dataset.loaded = '1';
+        })
+        .catch(() => {
+            panel.innerHTML = '<div class="small text-danger py-1">{{ __('Erreur de chargement.') }}</div>';
+        });
+});
+</script>
 @endsection

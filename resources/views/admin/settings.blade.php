@@ -332,15 +332,18 @@
         </div>
 
         <div class="tab-pane fade" id="tab-menu" role="tabpanel">
-            <h6 class="mb-2">Libellés et ordre des menus (navigation latérale)</h6>
+            <input type="hidden" name="menu_form" value="1">
+            <h6 class="mb-2">Libellés, ordre et visibilité des menus (navigation latérale)</h6>
             <p class="small text-muted">
-                Personnalisez le nom affiché de chaque entrée de menu et son ordre d'apparition pour tous les
-                utilisateurs de l'organisation. Un libellé vide utilise le libellé par défaut (traduit FR/EN).
-                Le groupe « Administration » reste toujours affiché en dernier.
+                Personnalisez le nom affiché de chaque entrée de menu, son ordre d'apparition et sa visibilité
+                par défaut pour tous les utilisateurs de l'organisation. Un libellé vide utilise le libellé par
+                défaut (traduit FR/EN). Les utilisateurs peuvent ensuite masquer d'autres menus pour eux-mêmes
+                (profil → « Menus affichés »), sans jamais réafficher un menu masqué ici.
+                Le groupe « Administration » reste piloté par les permissions et affiché en dernier.
             </p>
             <table class="table table-sm align-middle">
                 <thead>
-                    <tr><th>Menu</th><th style="width:45%">Libellé personnalisé</th><th style="width:110px">Ordre</th></tr>
+                    <tr><th>Menu</th><th style="width:35%">Libellé personnalisé</th><th style="width:90px">Ordre</th><th style="width:110px" class="text-center">Affiché par défaut</th></tr>
                 </thead>
                 <tbody>
                     @foreach ($menuItems as $key => $item)
@@ -348,19 +351,39 @@
                         <td><i class="bi {{ $item['icon'] }}"></i> {{ $item['custom'] ? $item['label'] : __($item['label']) }} <code class="small text-muted">{{ $key }}</code></td>
                         <td><input type="text" name="menu_labels[{{ $key }}]" value="{{ $item['custom'] ? $item['label'] : '' }}" maxlength="50" class="form-control form-control-sm" placeholder="{{ __($item['label']) }}"></td>
                         <td><input type="number" name="menu_order[{{ $key }}]" value="{{ $loop->iteration }}" min="1" max="99" class="form-control form-control-sm"></td>
+                        <td class="text-center">
+                            <input class="form-check-input" type="checkbox" name="menu_visible[{{ $key }}]" value="1" @checked(! in_array($key, $menuHidden, true))>
+                        </td>
                     </tr>
                     @endforeach
                     <tr>
                         <td><i class="bi bi-gear"></i> Groupe Administration <code class="small text-muted">administration</code></td>
                         <td><input type="text" name="menu_labels[administration]" value="{{ $menuAdminLabel === 'Administration' ? '' : $menuAdminLabel }}" maxlength="50" class="form-control form-control-sm" placeholder="Administration"></td>
-                        <td class="small text-muted">toujours en dernier</td>
+                        <td class="small text-muted">en dernier</td>
+                        <td class="small text-muted text-center">permissions</td>
                     </tr>
                 </tbody>
             </table>
-            <button type="button" class="btn btn-sm btn-outline-secondary"
-                    onclick="document.querySelectorAll('#tab-menu input[type=text]').forEach(function (i) { i.value = ''; });">
-                Réinitialiser les libellés
-            </button>
+            <div class="row g-2 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label small mb-1">Menu affiché par défaut au démarrage</label>
+                    <select name="menu_startup" class="form-select form-select-sm">
+                        <option value="">Tableau de bord (défaut)</option>
+                        @foreach ($menuItems as $key => $item)
+                            @if (! in_array($key, $menuHidden, true))
+                            <option value="{{ $key }}" @selected($menuStartup === $key)>{{ $item['custom'] ? $item['label'] : __($item['label']) }}</option>
+                            @endif
+                        @endforeach
+                    </select>
+                    <div class="form-text">Après connexion, l'utilisateur atterrit sur ce menu (sauf s'il a choisi le sien dans son profil).</div>
+                </div>
+                <div class="col-md-7">
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            onclick="document.querySelectorAll('#tab-menu input[type=text]').forEach(function (i) { i.value = ''; });">
+                        Réinitialiser les libellés
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="mt-3">

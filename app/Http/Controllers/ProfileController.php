@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\AuditService;
+use App\Services\MenuService;
 use App\Services\MfaService;
 use App\Services\TenantSettings;
 use App\Themes\ThemeRegistry;
@@ -18,11 +19,57 @@ class ProfileController extends Controller
     {
         $user = auth()->user();
 
+        $menuService = app(MenuService::class);
+        $tenantVisible = $menuService->tenantVisibleKeys($user->tenant);
+        $tenantHidden = $menuService->hiddenKeys($user->tenant, null);
+        $userHidden = array_values(array_intersect((array) ($user->menu_hidden ?? []), $menuService->validKeys()));
+
         return view('profile', [
             'user' => $user,
             'secret' => $user->mfa_enabled ? null : $user->mfa_secret,
             'otpauth' => $user->mfa_secret ? $this->mfa->otpauthUrl($user, $user->mfa_secret) : null,
+            'menuItems' => array_filter(
+                $menuService->items($user->tenant),
+                fn ($key) => in_array($key, $tenantVisible, true),
+                ARRAY_FILTER_USE_KEY
+            ),
+            'menuTenantHidden' => $tenantHidden,
+            'menuUserHidden' => $userHidden,
+            'menuTenantStartup' => (string) ($user->tenant?->settings['menu']['startup'] ?? ''),
         ]);
+    }
+
+    /** Visibilité des menus et menu de démarrage personnels (l'utilisateur ne peut que restreindre). */
+    public function updateMenuPreferences(Request $request)
+    {
+        $user = auth()->user();
+        $menuService = app(MenuService::class);
+
+        $allowed = $menuService->tenantVisibleKeys($user->tenant);
+        $visible = array_values(array_intersect(
+            array_keys((array) $request->input('menu_visible', [])),
+            $allowed
+        ));
+
+        if ($visible === []) {
+            return back()->withErrors(['menu_visible' => 'Au moins un menu doit rester affiché.']);
+        }
+
+        $startup = (string) $request->input('menu_startup', '');
+        if ($startup !== '' && ! in_array($startup, $visible, true)) {
+            return back()->withErrors(['menu_startup' => 'Le menu de démarrage doit être un menu affiché.']);
+        }
+
+        $hidden = array_values(array_diff($allowed, $visible));
+
+        $user->update([
+            'menu_hidden' => $hidden,
+            'menu_startup' => $startup !== '' ? $startup : null,
+        ]);
+
+        $this->audit->log('profile.menu_prefs_updated', 'user', $user->id, ['hidden' => $hidden, 'startup' => $startup ?: null]);
+
+        return back()->with('success', 'Menus mis à jour.');
     }
 
     /** Préférence d'apparence : clair / sombre / auto (persistant par utilisateur). */

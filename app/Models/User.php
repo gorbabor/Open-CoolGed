@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
-#[Fillable(['tenant_id', 'name', 'email', 'password', 'is_super_admin', 'status', 'mfa_enabled', 'mfa_secret', 'theme', 'theme_mode', 'locale', 'doc_view', 'doc_group', 'doc_columns', 'my_doc_columns', 'last_login_at', 'job_id', 'department_id', 'direction_id', 'site_id', 'entity_id', 'country_id'])]
+#[Fillable(['tenant_id', 'name', 'email', 'password', 'is_super_admin', 'status', 'mfa_enabled', 'mfa_secret', 'theme', 'theme_mode', 'locale', 'doc_view', 'doc_group', 'doc_columns', 'my_doc_columns', 'menu_hidden', 'menu_startup', 'last_login_at', 'job_id', 'department_id', 'direction_id', 'site_id', 'entity_id', 'country_id'])]
 #[Hidden(['password', 'remember_token', 'mfa_secret'])]
 class User extends Authenticatable
 {
@@ -24,6 +24,7 @@ class User extends Authenticatable
             'mfa_enabled' => 'boolean',
             'doc_columns' => 'array',
             'my_doc_columns' => 'array',
+            'menu_hidden' => 'array',
             'last_login_at' => 'datetime',
         ];
     }

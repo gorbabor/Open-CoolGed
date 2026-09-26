@@ -617,6 +617,8 @@ class AdminController extends Controller
             'workflowChoices' => Workflow::orderBy('name')->get(['id', 'name']),
             'menuItems' => app(MenuService::class)->items(auth()->user()->tenant),
             'menuAdminLabel' => app(MenuService::class)->adminLabel(auth()->user()->tenant),
+            'menuHidden' => app(MenuService::class)->hiddenKeys(auth()->user()->tenant, null),
+            'menuStartup' => (string) (auth()->user()->tenant->settings['menu']['startup'] ?? ''),
             'contentCounts' => [
                 'documents' => Document::withoutGlobalScopes()->where('tenant_id', auth()->user()->tenant_id)->count(),
                 'spaces' => Space::withoutGlobalScopes()->where('tenant_id', auth()->user()->tenant_id)->where('is_personal', false)->count(),
@@ -740,30 +742,63 @@ class AdminController extends Controller
             'default_workflow_type' => $request->filled('default_workflow_type') ? (int) $request->input('default_workflow_type') : null,
         ]);
 
-        // Menus : libellés personnalisés et ordre d'affichage de la sidebar (tenant).
-        if ($request->has('menu_labels') || $request->has('menu_order')) {
-            $labels = [];
-            foreach ((array) $request->input('menu_labels', []) as $key => $label) {
-                if (! in_array($key, MenuService::validKeys(), true) && $key !== MenuService::ADMIN_KEY) {
-                    continue;
-                }
-                $label = trim(mb_substr((string) $label, 0, 50));
-                if ($label !== '') {
-                    $labels[$key] = $label;
+        // Menus : libellés, ordre, visibilité par défaut et menu de démarrage (sidebar du tenant).
+        if ($request->has('menu_labels') || $request->has('menu_order') || $request->boolean('menu_form')) {
+            $current = (array) ($settings->get('menu') ?? []);
+
+            $labels = (array) ($current['labels'] ?? []);
+            if ($request->has('menu_labels')) {
+                $labels = [];
+                foreach ((array) $request->input('menu_labels', []) as $key => $label) {
+                    if (! in_array($key, MenuService::validKeys(), true) && $key !== MenuService::ADMIN_KEY) {
+                        continue;
+                    }
+                    $label = trim(mb_substr((string) $label, 0, 50));
+                    if ($label !== '') {
+                        $labels[$key] = $label;
+                    }
                 }
             }
 
-            $positions = [];
-            foreach ((array) $request->input('menu_order', []) as $key => $position) {
-                if (in_array($key, MenuService::validKeys(), true)) {
-                    $positions[$key] = max(1, min(99, (int) $position));
+            $order = (array) ($current['order'] ?? []);
+            if ($request->has('menu_order')) {
+                $positions = [];
+                foreach ((array) $request->input('menu_order', []) as $key => $position) {
+                    if (in_array($key, MenuService::validKeys(), true)) {
+                        $positions[$key] = max(1, min(99, (int) $position));
+                    }
                 }
+                asort($positions);
+                $order = array_values(array_keys($positions));
             }
-            asort($positions);
+
+            $hidden = (array) ($current['hidden'] ?? []);
+            $startup = $current['startup'] ?? null;
+
+            if ($request->boolean('menu_form')) {
+                $visible = array_values(array_intersect(
+                    array_keys((array) $request->input('menu_visible', [])),
+                    MenuService::validKeys()
+                ));
+
+                if ($visible === []) {
+                    return back()->withErrors(['menu_visible' => 'Au moins un menu doit rester affiché.']);
+                }
+
+                $hidden = array_values(array_diff(MenuService::validKeys(), $visible));
+
+                $startup = (string) $request->input('menu_startup', '');
+                if ($startup !== '' && ! in_array($startup, $visible, true)) {
+                    return back()->withErrors(['menu_startup' => 'Le menu de démarrage doit être un menu affiché.']);
+                }
+                $startup = $startup !== '' ? $startup : null;
+            }
 
             $settings->set(['menu' => [
                 'labels' => $labels,
-                'order' => array_values(array_keys($positions)),
+                'order' => $order,
+                'hidden' => $hidden,
+                'startup' => $startup,
             ]]);
         }
 

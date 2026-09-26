@@ -136,12 +136,19 @@ MySQL/MariaDB, Composer, SSH, cron.
   gérés par l'admin tenant), création de document réservée à `documents.create`
   (boutons masqués + 403), historique IA réservé à `ai.admin`,
   `roles:sync` auto-alimente le registre des permissions
-- Menus personnalisables par tenant : renommage des entrées de la sidebar et
-  ordre d'affichage (Administration → Paramètres → onglet « Menus », libellés
-  vides = défauts traduits, groupe Administration en dernier)
+- Menus personnalisables par tenant : renommage des entrées de la sidebar,
+  ordre d'affichage, visibilité par défaut et menu de démarrage après
+  connexion (Administration → Paramètres → onglet « Menus »), préférences
+  utilisateur au profil (« Menus affichés » + menu de démarrage — visibilité
+  effective = intersection, l'utilisateur ne peut que restreindre), libellés
+  vides = défauts traduits, groupe Administration en dernier
 - Dossiers imbriqués et arborescence : sous-dossiers jusqu'à 5 niveaux
-  (sélecteur parent, validation serveur), écran Espaces en arbre repliable,
-  filtre « Dossier » indenté et chemin complet sur la fiche document
+  (sélecteur parent, validation serveur), écran Espaces en arbre lisible
+  (sous-dossiers repliés par défaut + chevron de pliage, lignes guides par
+  niveau, hiérarchie icônes/poids, compteur en pastille si non vide) avec
+  expansion des documents d'un dossier (panneau inline chargé à la demande,
+  50 premiers + « Voir tous les documents du dossier »), filtre « Dossier »
+  indenté et chemin complet sur la fiche document
 - Assistant d'installation web : route `/install` (prérequis, base de données
   avec test de connexion, `.env` + APP_KEY, migrations, comptes initiaux,
   comptes de démonstration optionnels) puis verrou `storage/installed.lock` ;

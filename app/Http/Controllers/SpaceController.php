@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Document;
 use App\Models\Folder;
 use App\Models\Space;
 use App\Services\AuditService;
@@ -23,6 +24,8 @@ class SpaceController extends Controller
     }
 
     public const MAX_FOLDER_DEPTH = 5;
+
+    public const FOLDER_DOCS_LIMIT = 50;
 
     public function index()
     {
@@ -129,6 +132,36 @@ class SpaceController extends Controller
         $this->audit->log('folder.deleted', 'folder', $folder->id);
 
         return back()->with('success', 'Dossier supprimé.');
+    }
+
+    /** Expansion d'un dossier dans l'arbre : documents accessibles du dossier (lazy-load). */
+    public function folderDocuments(int $folder)
+    {
+        $user = auth()->user();
+        $folder = $this->folder($folder);
+        $space = $folder->space;
+
+        if (! $space || $space->is_personal) {
+            abort(404);
+        }
+
+        if (! $this->permissions->can($user, 'documents.view', $space)) {
+            abort(403, 'Permission requise.');
+        }
+
+        $query = Document::with(['currentVersion', 'type'])
+            ->where('folder_id', $folder->id)
+            ->whereIn('documents.id', $this->permissions->accessibleDocumentIds($user) ?: [0]);
+
+        $total = (clone $query)->count();
+        $documents = $query->orderByDesc('updated_at')->limit(self::FOLDER_DOCS_LIMIT)->get();
+
+        return view('spaces._folder_documents', [
+            'folder' => $folder,
+            'documents' => $documents,
+            'total' => $total,
+            'limit' => self::FOLDER_DOCS_LIMIT,
+        ]);
     }
 
     public function renameSpace(Request $request, int $space)

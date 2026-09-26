@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\AuditService;
+use App\Services\MenuService;
 use App\Services\MfaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -56,7 +57,7 @@ class AuthController extends Controller
         $user->update(['last_login_at' => now()]);
         $audit->log('auth.login.success', 'user', $user->id);
 
-        return redirect()->intended($user->isSuperAdmin() ? route('superadmin.tenants') : route('dashboard'));
+        return redirect()->intended($user->isSuperAdmin() ? route('superadmin.tenants') : app(MenuService::class)->startupRoute($user));
     }
 
     public function showMfaVerify()
@@ -89,7 +90,7 @@ class AuthController extends Controller
         $user->update(['last_login_at' => now()]);
         $audit->log('auth.login.success', 'user', $user->id);
 
-        return redirect()->route($user->isSuperAdmin() ? 'superadmin.tenants' : 'dashboard');
+        return redirect()->to($user->isSuperAdmin() ? route('superadmin.tenants') : app(MenuService::class)->startupRoute($user));
     }
 
     public function logout(Request $request, AuditService $audit)

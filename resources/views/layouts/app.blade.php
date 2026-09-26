@@ -108,6 +108,25 @@
         .sidebar .nav-link.sub-link { padding-left: 1.25rem; font-size: .9rem; }
         .sidebar .nav-link.sub-link.active { border-left-color: var(--color-accent); }
         .sidebar .collapse .nav-link { border-radius: 0; }
+        /* Arbre des espaces : densité, lignes guides par niveau et chevron de pliage. */
+        .space-tree { font-size: .8125rem; line-height: 1.35; }
+        .space-tree .folder-row { display: flex; align-items: center; gap: .35rem; padding: .12rem .3rem; border-radius: var(--radius); }
+        .space-tree .folder-row:hover { background: rgba(var(--color-accent-rgb), .06); }
+        .space-tree .folder-caret, .space-tree .caret-spacer { flex: 0 0 1.1rem; width: 1.1rem; text-align: center; }
+        .space-tree .folder-caret { padding: 0; border: 0; background: none; color: var(--color-muted); cursor: pointer; line-height: 1; }
+        .space-tree .folder-caret .bi { font-size: .8em; transition: transform .15s ease; }
+        .space-tree .folder-caret[aria-expanded="true"] .bi { transform: rotate(90deg); }
+        .space-tree .folder-toggle { padding: 0; border: 0; background: none; color: inherit; cursor: pointer; text-align: left; }
+        .space-tree .folder-caret:hover, .space-tree .folder-toggle:hover { transform: none; box-shadow: none; }
+        .space-tree .folder-sub { font-size: .95em; }
+        .space-tree .folder-icon-root { color: rgba(var(--color-accent-rgb), .85); }
+        .space-tree .folder-icon-sub { color: var(--color-muted); }
+        .space-tree .folder-count { font-size: .7rem; color: var(--color-muted); background: var(--color-background); border: var(--border); border-radius: 99px; padding: .02rem .45rem; white-space: nowrap; }
+        .space-tree .folder-actions { font-size: .85em; }
+        .space-tree .folder-children { margin: .05rem 0 .05rem 1.05rem; padding-left: .55rem; border-left: 1px dashed rgba(var(--color-accent-rgb), .35); }
+        .space-tree .folder-children > li { position: relative; }
+        .space-tree .folder-children > li::before { content: ""; position: absolute; left: -.55rem; top: .75em; width: .4rem; border-top: 1px dashed rgba(var(--color-accent-rgb), .35); }
+        .space-tree .folder-documents { margin: .05rem 0 .05rem 1.05rem; padding-left: .55rem; border-left: 1px dashed rgba(var(--color-accent-rgb), .35); }
         @media (hover: hover) {
             .card, .btn, button:not(:disabled) { transition: transform .2s ease, box-shadow .2s ease; }
             .card:hover, .btn:hover, button:not(:disabled):hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 14px 30px rgba(0,0,0,.18); }
@@ -131,7 +150,7 @@
                         @php
                             $menuService = app(\App\Services\MenuService::class);
                             $menuTenant = auth()->user()->isSuperAdmin() ? null : auth()->user()->tenant;
-                            $menuItems = $menuService->items($menuTenant);
+                            $menuItems = $menuService->items($menuTenant, auth()->user());
                             $adminMenuLabel = $menuService->adminLabel($menuTenant);
                             $menuActive = [
                                 'dashboard' => request()->routeIs('dashboard'),

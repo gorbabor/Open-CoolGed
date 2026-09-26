@@ -1,12 +1,27 @@
 @foreach ($nodes as $folder)
-    <li class="py-1">
-        <div class="d-flex justify-content-between align-items-start">
-            <span>
-                <i class="bi bi-folder"></i> {{ $folder->name }}
-                <span class="text-muted">({{ $folder->documents_count }} doc.)</span>
-            </span>
+    @php
+        $children = $tree[$folder->id] ?? collect();
+        $folderLevel = $level ?? 1;
+    @endphp
+    <li class="folder-node">
+        <div class="folder-row">
+            @if ($children->isNotEmpty())
+            <button type="button" class="folder-caret" aria-expanded="false" title="{{ __('Afficher les sous-dossiers') }}">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+            @else
+            <span class="caret-spacer"></span>
+            @endif
+            <button type="button" class="folder-toggle {{ $folderLevel === 1 ? 'fw-semibold' : 'folder-sub' }}"
+                    data-url="{{ route('folders.documents', $folder) }}" aria-expanded="false"
+                    title="{{ __('Afficher les documents du dossier') }}">
+                <i class="bi {{ $folderLevel === 1 ? 'bi-folder-fill folder-icon-root' : 'bi-folder2 folder-icon-sub' }}"></i> {{ $folder->name }}
+            </button>
+            @if ($folder->documents_count > 0)
+            <span class="folder-count" title="{{ $folder->documents_count }} {{ $folder->documents_count > 1 ? __('documents') : __('document') }}">{{ $folder->documents_count }} doc.</span>
+            @endif
             @if ($canManage)
-            <span class="d-flex align-items-center gap-2">
+            <span class="folder-actions d-flex align-items-center gap-2 ms-auto">
                 @if ($folder->depth() < $maxDepth)
                 <details class="d-inline">
                     <summary class="d-inline text-success" style="cursor:pointer" title="{{ __('Ajouter un sous-dossier') }}">＋</summary>
@@ -32,10 +47,10 @@
             </span>
             @endif
         </div>
-        @php $children = $tree[$folder->id] ?? collect(); @endphp
+        <div class="folder-documents d-none"></div>
         @if ($children->isNotEmpty())
-            <ul class="list-unstyled ms-3 ps-2 border-start">
-                @include('spaces._tree', ['nodes' => $children, 'tree' => $tree, 'space' => $space, 'maxDepth' => $maxDepth, 'canManage' => $canManage])
+            <ul class="list-unstyled folder-children d-none">
+                @include('spaces._tree', ['nodes' => $children, 'tree' => $tree, 'space' => $space, 'maxDepth' => $maxDepth, 'canManage' => $canManage, 'level' => $folderLevel + 1])
             </ul>
         @endif
     </li>
